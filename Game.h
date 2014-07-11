@@ -3,6 +3,8 @@
 
 #include "SoraIncludes.h"
 #include "GameState.h"
+#include "GameContext.h"
+#include "EntityManager.h"
 
 class CGame
 {
@@ -11,10 +13,10 @@ private:
 
     CGraphicsContext m_GraphicsContext;
     CDrawContext m_DrawContext;
-    CGameContext m_GameContext;
+    CTOFNContext m_GameContext;
     CStateMachine m_StateMachine;
     CTextureFactory m_TextureFactory;
-	CEntityManager m_EntityManager;
+	CTOFNManager m_EntityManager;
 
 public:
 
