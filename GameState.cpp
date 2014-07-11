@@ -12,8 +12,11 @@ void CGameState::Input()
 
     m_GameInput.Poll();
 
-    if( m_GameInput.KeyDown( SDLK_ESCAPE ) )
-        m_bContinue = false;
+    if( m_GameInput.KeyDown( SDL_SCANCODE_ESCAPE ) )
+       {
+	
+		   m_bContinue = false;
+	}
 
 }
 

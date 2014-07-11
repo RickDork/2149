@@ -2,6 +2,7 @@
 #define GAME_H_
 
 #include "SoraIncludes.h"
+#include "GameState.h"
 
 class CGame
 {
@@ -13,6 +14,7 @@ private:
     CGameContext m_GameContext;
     CStateMachine m_StateMachine;
     CTextureFactory m_TextureFactory;
+	CEntityManager m_EntityManager;
 
 public:
 
