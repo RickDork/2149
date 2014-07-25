@@ -3,12 +3,13 @@
 void CTOFNEntityManager::UpdateAllEntities()
 {
 
-    boost::ptr_vector< CEntityObject > * entityObjs = m_pRawEntityList->GetEntityObjects();
+    boost::ptr_vector< CEntityObject > * entityObjs = &m_pRawEntityList.GetEntityObjects();
 
-    BOOST_FOREACH( CEntityObject * o, *entityObjs )
+	for( boost::ptr_vector< CEntityObject >::iterator i = entityObjs->begin();
+		 i != entityObjs->end(); i++ )
     {
 
-        o->GetContent()->Update();
+        ( *i ).GetContent()->Update();
 
     }
 
@@ -17,12 +18,13 @@ void CTOFNEntityManager::UpdateAllEntities()
 void CTOFNEntityManager::DrawAllEntities()
 {
 
-    boost::ptr_vector< CEntityObject > * entityObjs = m_pRawEntityList->GetEntityObjects();
+    boost::ptr_vector< CEntityObject > * entityObjs = &m_pRawEntityList.GetEntityObjects();
 
-    BOOST_FOREACH( CEntityObject * o, *entityObjs )
+	for( boost::ptr_vector< CEntityObject >::iterator i = entityObjs->begin();
+		 i != entityObjs->end(); i++ )
     {
 
-        o->GetContent()->Draw();
+        ( *i ).GetContent()->Draw();
 
     }
 

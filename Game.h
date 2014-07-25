@@ -16,7 +16,7 @@ private:
     CTOFNContext m_GameContext;
     CStateMachine m_StateMachine;
     CTextureFactory m_TextureFactory;
-	CTOFNManager m_EntityManager;
+	CTOFNEntityManager m_EntityManager;
 
 public:
 

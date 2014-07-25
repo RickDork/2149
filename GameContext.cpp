@@ -31,8 +31,8 @@ CWorldEntity * CTOFNContext::CreatePlayerEntity()
 CWorldEntity * CTOFNContext::CreateRandomEnemyEntity()
 {
 
-    CWorldEntity * ent = new CAIEntity;
-    CAIController * aic = new CAIController;
+    CAIEntity * ent = new CAIEntity;
+    CAIController * aic = new CEnemyAI;
     ent->SetClassType( "EN" );
     ent->CreatePhysicsBody( 64, 64 );
     ent->SetMaterial( m_pTextureFactory->GetObjectContent( "ENEMYSPRITE.png" ) );
@@ -67,6 +67,6 @@ void CTOFNContext::DoEnemyGenerator()
 void CTOFNContext::GameLogic()
 {
 
-    DoEnemyGenerator();
+    //DoEnemyGenerator();
 
 }

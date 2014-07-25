@@ -7,7 +7,7 @@ CGameState::CGameState() : CState()
 
 }
 
-void CGame::Init()
+void CGameState::Init()
 {
 
     Log::Debug( "Doing game state init" );
@@ -18,7 +18,7 @@ void CGame::Init()
 
 }
 
-void CGame::PostInit()
+void CGameState::PostInit()
 {
 
     Log::Debug( "Doing game state post-init" );

@@ -1,9 +1,11 @@
-#ifndef GAMECONTEXT_H_
-#define GAMECONTEXT_H_
+#ifndef TOFNCONTEXT_H_
+#define TOFNCONTEXT_H_
 
+#include "EnemyAI.h"
 #include "SoraIncludes.h"
+#include "EntityManager.h"
 
-class CTOFNContext : public CGameContext
+class CTOFNContext : public CGameContext<CTOFNEntityManager>
 {
 
 private:
