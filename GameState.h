@@ -4,8 +4,9 @@
 #include "SoraIncludes.h"
 
 #include "GameContext.h"
+#include "Entity.h"
 
-class CGameState : public CState
+class CGameState : public CState< CTOFNContext >
 {
 
 private:
@@ -15,18 +16,9 @@ private:
 
     CWorldEntity * m_pPlayerEntity;
 
-	CTOFNContext * m_pGameContext;
-
 public:
 
     CGameState();
-
-	void SetGameContext( CTOFNContext * pGameContext )
-	{
-
-		m_pGameContext = pGameContext;
-
-	}
 
     void Init();
     void PostInit();

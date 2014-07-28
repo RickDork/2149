@@ -3,9 +3,10 @@
 CGame::CGame()
 {
 
-	Log::Log( "APPLICATION INITIALIZING=======================" );
+    Log::ClearLog();
+    Log::SetDebugLoggingEnabled( true );
 
-	Log::SetDebugLoggingEnabled( true );
+	Log::Debug( "=======================APPLICATION INITIALIZING=======================" );
 
     m_GraphicsContext.SetDrawContext( &m_DrawContext );
 

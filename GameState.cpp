@@ -12,7 +12,7 @@ void CGameState::Init()
 
     Log::Debug( "Doing game state init" );
 
-    m_PhysicsWorld.Initialize( 0.0f, 0.0f );
+    m_pGameContext->InitializePhysicsWorld();
 
     m_bInit = true;
 
@@ -62,15 +62,7 @@ void CGameState::Input()
 void CGameState::Think()
 {
 
-    //No physics needed
-    //m_PhysicsWorld.Update();
-
-    m_pGameContext->EntityManager()->UpdateAllEntities();
-
     m_pGameContext->GameLogic();
-
-    //In normal operations, entities should be "deleted", when this happens they aren't actually removed from the entity manager until after all update logic is finished.
-    m_pGameContext->EntityManager()->RemoveAllDeletedEntities();
 
 }
 
