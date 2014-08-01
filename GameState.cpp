@@ -13,6 +13,7 @@ void CGameState::Init()
     Log::Debug( "Doing game state init" );
 
     m_pGameContext->InitializePhysicsWorld();
+    m_pGameContext->InitializeLua();
 
     m_bInit = true;
 
@@ -50,6 +51,13 @@ void CGameState::Input()
 
     if( m_GameInput.KeyDown( SDL_SCANCODE_S ) )
         m_pPlayerEntity->Displace( 0.0f, plyMoveSpeedY * m_pGameContext->GetFrameDelta() );
+
+    if( m_GameInput.KeyDown( SDL_SCANCODE_SPACE ) )
+    {
+
+        m_pGameContext->FireBulletFrom( ENTTYPE_PLYBULLET, m_pPlayerEntity, 5, 600.0f );
+
+    }
 
     if( m_GameInput.KeyDown( SDL_SCANCODE_ESCAPE ) )
     {

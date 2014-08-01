@@ -4,6 +4,7 @@
 #include "SoraIncludes.h"
 
 #include "GameContext.h"
+#include "ShipEntity.h"
 #include "Entity.h"
 
 class CGameState : public CState< CTOFNContext >
@@ -12,9 +13,8 @@ class CGameState : public CState< CTOFNContext >
 private:
 
     CGameInput m_GameInput;
-    CPhysicsWorld m_PhysicsWorld;
 
-    CWorldEntity * m_pPlayerEntity;
+    CShipEntity * m_pPlayerEntity;
 
 public:
 

@@ -7,16 +7,20 @@
 #include "Entity.h"
 #include "CollisionCallback.h"
 #include "Bullet.h"
+#include "ShipEntity.h"
+#include "Lua.h"
+#include "LuaContext.h"
 
-class CTOFNContext : public CGameContext< CTOFNEntityManager >
+class CTOFNContext : public CLuaContext
 {
 
 private:
 
-    CWorldEntity * m_pPlayerEntity;
+    CShipEntity * m_pPlayerEntity;
     int m_MaxEnemyCount;
     int m_CurEnemyCount;
 
+    CTOFNLua m_Lua;
     CPhysicsWorld m_PhysicsWorld;
     CCollisionCallback m_CollisionCallback;
 
@@ -25,19 +29,23 @@ private:
 public:
 
     void InitializePhysicsWorld();
+    void InitializeLua();
 
-    CWorldEntity * GetPlayerEntity()
+    CShipEntity * GetPlayerEntity()
     {
 
         return m_pPlayerEntity;
 
     }
 
-    CWorldEntity * CreatePlayerEntity();
-    CWorldEntity * CreateRandomEnemyEntity();
+    UpdateAllEntities();
 
-    void HandlePlayerContact( void *, void * );
-    void HandleEntityContact( void *, void * );
+    CShipEntity * CreatePlayerEntity();
+    CShipEntity * CreateRandomEnemyEntity();
+    CAIEntity * FireBulletFrom( int, float, float, int, float );
+    void FireBulletFrom( int, CShipEntity * , int, float );
+
+    void HandleEntityContact( void *, int, void *, int );
 
     void GameLogic();
 

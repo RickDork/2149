@@ -9,7 +9,8 @@ void CTOFNEntityManager::UpdateAllEntities()
 		 i != entityObjs->end(); i++ )
     {
 
-        ( *i ).GetContent()->Update();
+        if( ( *i ).GetContent()->IsActive() )
+            ( *i ).GetContent()->Update();
 
     }
 
@@ -24,7 +25,8 @@ void CTOFNEntityManager::DrawAllEntities()
 		 i != entityObjs->end(); i++ )
     {
 
-        ( *i ).GetContent()->Draw();
+        if( ( *i ).GetContent()->IsActive() )
+            ( *i ).GetContent()->Draw();
 
     }
 
@@ -47,6 +49,7 @@ void CTOFNEntityManager::RemoveAllDeletedEntities()
 void CTOFNEntityManager::DeleteEntity( CEntity * pEntity )
 {
 
+    pEntity->SetActive( false );
     m_pDeletedEntities.push_back( pEntity );
 
 }

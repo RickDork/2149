@@ -6,6 +6,8 @@ void CCollisionCallback::BeginContact( b2Contact * contact )
     CEntity * entityA = static_cast< CEntity * >( contact->GetFixtureA()->GetBody()->GetUserData() );
     CEntity * entityB = static_cast< CEntity * >( contact->GetFixtureB()->GetBody()->GetUserData() );
 
+    CEntity * entities[] = { entityA, entityB };
+
     int entityTypeA = entityA->GetClassTypeID();
     int entityTypeB = entityB->GetClassTypeID();
     int entityTypes = ( entityTypeA | entityTypeB );
@@ -13,35 +15,37 @@ void CCollisionCallback::BeginContact( b2Contact * contact )
     bool involvesPlayer = ( entityTypes & ENTTYPE_PLAYER );
     bool involvesEnemy = ( entityTypes & ENTTYPE_ENEMY );
 
-    if( involvesPlayer )
+    if( involvesPlayer || involvesEnemy )
     {
 
-        CEntity * ply = NULL;
-        CEntity * ent = NULL;
+        CEntity * mainEntity = NULL;
+        CEntity * subEntity = NULL;
 
-        if( entityTypeA & ENTTYPE_PLAYER )
+        int mainEntityType = 0;
+        int subEntityType = 0;
+
+        for( int j = 0; j < 2; j++ )
         {
 
-            ply = entityA;
-            ent = entityB;
+            int curEntType = entities[j]->GetClassTypeID();
 
-        } else
-        {
+            if( ( involvesPlayer && curEntType & ENTTYPE_PLAYER ) ||
+                ( !involvesPlayer && curEntType & ENTTYPE_ENEMY ) )
+            {
 
-            ent = entityA;
-            ply = entityB;
+                mainEntity = entities[j];
+                subEntity = entities[1-j];
+                mainEntityType = curEntType;
+                subEntityType = entities[1-j]->GetClassTypeID();
+                break;
+
+            }
 
         }
 
-        m_pContext->HandlePlayerContact( ply, ent );
-
-    } else
-    {
-
-        m_pContext->HandleEntityContact( entityA, entityB );
+        m_pContext->HandleEntityContact( mainEntity, mainEntityType, subEntity, subEntityType );
 
     }
-
 
 
 }

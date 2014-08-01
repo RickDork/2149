@@ -14,19 +14,29 @@ void CTOFNContext::InitializePhysicsWorld()
 
 }
 
-CWorldEntity * CTOFNContext::CreatePlayerEntity()
+void CTOFNContext::InitializeLua()
+{
+
+    m_Lua.Initialize();
+    SetLuaContext( this );
+
+}
+
+CShipEntity * CTOFNContext::CreatePlayerEntity()
 {
 
     static const float defaultPlayerPosX = 350.0f;
     static const float defaultPlayerPosY = 500.0f;
 
-    CWorldEntity * ent = new CWorldEntity;
+    CShipEntity * ent = new CShipEntity;
     ent->SetClassTypeID( ENTTYPE_PLAYER );
     ent->CreatePhysicsBody( &m_PhysicsWorld, 64, 64 );
     ent->SetMaterial( m_pTextureFactory->GetObjectContent( "PLAYERSPRITE.png" ) );
     ent->DisablePhysicsMovement();
     ent->SetGravity( 0 );
     ent->SetPos( defaultPlayerPosX, defaultPlayerPosY );
+
+    ent->AddGun( 32.0f, 12.0f );
 
     if( m_pPlayerEntity )
         m_pEntityManager->RemoveEntity( m_pPlayerEntity );
@@ -39,13 +49,34 @@ CWorldEntity * CTOFNContext::CreatePlayerEntity()
 
 }
 
-CWorldEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, float speed )
+void CTOFNContext::FireBulletFrom( int type, CShipEntity * pShip, int dmg, float speed )
+{
+
+    const std::vector< Vector3 > & GunPos = pShip->GetGunPositions();
+    float pX, pY;
+
+    pShip.GetPos().Get( &pX, &pY );
+
+    for( int j = 0; j < GunPos.size(); j++ )
+    {
+
+        float x, y;
+        GunPos[j].Get( &x, &y );
+
+        FireBulletFrom( type, pX + x, pY + y, dmg, speed );
+
+    }
+
+}
+
+CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, int dmg, float speed )
 {
 
     CAIEntity * ent = new CAIEntity;
     CBulletAI * aic = new CBulletAI;
 
     aic->SetSpeed( speed );
+    aic->SetDamage( dmg );
     aic->SetDirection( ( type & ENTTYPE_ENBULLET )? DIR_DOWN : DIR_UP );
 
     ent->SetClassTypeID( type );
@@ -66,11 +97,12 @@ CWorldEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, float s
 
 }
 
-CWorldEntity * CTOFNContext::CreateRandomEnemyEntity()
+CShipEntity * CTOFNContext::CreateRandomEnemyEntity()
 {
 
-    CAIEntity * ent = new CAIEntity;
+    CShipEntity * ent = new CShipEntity;
     CAIController * aic = new CEnemyAI;
+
     ent->SetClassTypeID( ENTTYPE_ENEMY );
     ent->SetClassType( "EN" );
     ent->CreatePhysicsBody( &m_PhysicsWorld, 64, 64 );
@@ -104,52 +136,80 @@ void CTOFNContext::DoEnemyGenerator()
 
 }
 
-void CTOFNContext::HandlePlayerContact( void * pPlayer, void * pEntity )
+void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pEntityB, int entTypeB )
 {
 
-    CWorldEntity * ply = static_cast< CWorldEntity * >( pPlayer );
-    CWorldEntity * ent = static_cast< CWorldEntity * >( pEntity );
+    //Due to the way our collision callback functions, entA is always a player ship or enemy ship
+    CWorldEntity * entA = static_cast< CShipEntity * >( pEntityA );
+    CWorldEntity * entB = NULL;
 
-    if( ent->GetClassTypeID() & ENTTYPE_ENEMY )
+    if( entTypeB & ( ENTTYPE_ENBULLET | ENTTYPE_PLYBULLET ) )
+        entB = static_cast< CAIEntity * >( pEntityB );
+    else if( entTypeB & ENTTYPE_ENEMY )
+        entB = static_cast< CShipEntity * >( pEntityB );
+    else
+        return; //Should never happen
+
+    if( entTypeA & ENTTYPE_PLAYER )
     {
 
-        m_pEntityManager->DeleteEntity( ent );
+        if( entTypeB & ENTTYPE_ENEMY )
+        {
 
-    } else if( ent->GetClassTypeID() & ENTTYPE_ENBBULLET )
+            m_pEntityManager->DeleteEntity( entB );
+
+        } else if( entTypeB & ENTTYPE_ENBULLET )
+        {
+
+            entA->Damage( static_cast< CBulletAI * >( entB->GetAIController() )->GetDamage() );
+            m_pEntityManager->DeleteEntity( entB );
+
+        }
+
+    } else if( entTypeA & ENTTYPE_ENEMY )
     {
 
+        if( entTypeB & ENTTYPE_PLYBBULLET )
+        {
 
+            entA->Damage( static_cast< CBulletAI * >( entB->GetAIController() )->GetDamage() );
+            m_pEntityManager->DeleteEntity( entB );
+
+        }
 
     }
 
 }
 
-void CTOFNContext::HandleEntityContact( void * pEntityA, void * pEntityB )
+void CTOFNContext::UpdateAllEntities()
 {
 
-    CWorldEntity * entA = static_cast< CWorldEntity * >( pEntityA );
-    CWorldEntity * entB = static_cast< CWorldEntity * >( pEntityB );
+    boost::ptr_vector< CEntityObject > * entityObjs = &m_pEntityManager->GetEntityObjects();
 
-    if( ( entA->GetClassTypeID() | entB->GetClassTypeID() ) & ENTTYPE_ENEMY )
+	for( boost::ptr_vector< CEntityObject >::iterator i = entityObjs->begin();
+		 i != entityObjs->end(); i++ )
     {
 
-        CWorldEntity * targetEnt;
-        CWorldEntity * bulletEnt;
-        bool bulletContact = false;
-
-        if( entA->GetClassTypeID() & ENTTYPE_ENBBULLET )
+        if( ( *i ).GetContent()->IsActive() )
         {
 
-            bulletEnt = entA;
-            targetEnt = entB;
-            bulletContact = true;
+            ( *i ).GetContent()->Update();
 
-        } else
-        {
+            int type = ( *i ).GetContent()->GetClassTypeID();
 
-            bulletEnt = entB;
-            targetEnt = entA;
-            bulletContact = true;
+            if( type & ( ENTTYPE_PLAYER | ENTTYPE_ENEMY ) )
+            {
+
+                CShipEntity * pShip = static_cast< CShipEntity * >( ( *i ).GetContent() );
+
+                if( pShip->GetHealth() <= 0 )
+                {
+
+                    m_pEntityManager->DeleteEntity( pShip );
+
+                }
+
+            }
 
         }
 
@@ -162,9 +222,11 @@ void CTOFNContext::GameLogic()
 
     m_PhysicsWorld.Update();
 
-    m_pEntityManager->UpdateAllEntities();
+    UpdateAllEntities();
 
     //DoEnemyGenerator();
+
+    m_Lua.CallEngineFunction( "GameLogic" );
 
     //In normal operations, entities should be "deleted", when this happens they aren't actually removed from the entity manager until after all update logic is finished.
     m_pEntityManager->RemoveAllDeletedEntities();
