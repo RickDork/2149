@@ -1,5 +1,5 @@
-#ifndef ENTITY_H_
-#define ENTITY_H_
+#ifndef TOFNENTITY_H_
+#define TOFNENTITY_H_
 
 enum
 {

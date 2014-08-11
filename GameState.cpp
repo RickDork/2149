@@ -24,7 +24,14 @@ void CGameState::PostInit()
 
     Log::Debug( "Doing game state post-init" );
 
+	m_pGameContext->TextureFactory()->NewTexture( "PLAYERSPRITE.png" );
+
     m_pPlayerEntity = m_pGameContext->CreatePlayerEntity();
+
+	//Our view mat never changes, set it once.
+	CMatrix< float > viewMat;
+	viewMat.Identity();
+	m_pGameContext->DrawContext()->UpdateViewMatrix( &viewMat );
 
     m_bPostInit = true;
 

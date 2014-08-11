@@ -34,7 +34,7 @@ CGame::CGame()
     CGameState * pGameState = new CGameState;
     pGameState->SetGameContext( &m_GameContext );
 
-    m_StateMachine.AddState( "GAME", pGameState, true );
+    m_StateMachine.AddState( "GAME", ( CStateBase * )pGameState, true );
 
     Log::Debug( "State Machine initialized\nStarting main loop" );
 

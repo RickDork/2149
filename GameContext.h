@@ -38,7 +38,7 @@ public:
 
     }
 
-    UpdateAllEntities();
+    void UpdateAllEntities();
 
     CShipEntity * CreatePlayerEntity();
     CShipEntity * CreateRandomEnemyEntity();

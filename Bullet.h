@@ -39,6 +39,13 @@ class CBulletAI : public CAIController
 
     }
 
+	int GetDamage()
+	{
+
+		return m_Damage;
+
+	}
+
     void SetDamage( int d )
     {
 

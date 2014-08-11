@@ -1,6 +1,6 @@
 #include "GameContext.h"
 
-CTOFNContext::CTOFNContext() : CGameContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 10 ), m_CurEnemyCount( 0 )
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 10 ), m_CurEnemyCount( 0 )
 {
 
 }
@@ -28,9 +28,12 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
     static const float defaultPlayerPosX = 350.0f;
     static const float defaultPlayerPosY = 500.0f;
 
+	Log::Debug( "Creating player entity" );
+
     CShipEntity * ent = new CShipEntity;
+	ent->SetContext( this );
     ent->SetClassTypeID( ENTTYPE_PLAYER );
-    ent->CreatePhysicsBody( &m_PhysicsWorld, 64, 64 );
+	ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 64, 64 );
     ent->SetMaterial( m_pTextureFactory->GetObjectContent( "PLAYERSPRITE.png" ) );
     ent->DisablePhysicsMovement();
     ent->SetGravity( 0 );
@@ -45,6 +48,8 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
 
     m_pEntityManager->AddEntity( m_pPlayerEntity );
 
+	Log::Debug( "Created player entity" );
+
     return m_pPlayerEntity;
 
 }
@@ -52,10 +57,10 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
 void CTOFNContext::FireBulletFrom( int type, CShipEntity * pShip, int dmg, float speed )
 {
 
-    const std::vector< Vector3 > & GunPos = pShip->GetGunPositions();
+    const std::vector< Vector3< float > > & GunPos = pShip->GetGunPositions();
     float pX, pY;
 
-    pShip.GetPos().Get( &pX, &pY );
+    pShip->GetPos().Get( &pX, &pY, &pY );
 
     for( int j = 0; j < GunPos.size(); j++ )
     {
@@ -81,7 +86,7 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, int dmg, f
 
     ent->SetClassTypeID( type );
     ent->SetClassType( "BLT" );
-    ent->CreatePhysicsBody( &m_PhysicsWorld, 5, 5 );
+	ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 5, 5 );
     ent->SetMaterial( m_pTextureFactory->GetObjectContent( "BULLET.png" ) );
     ent->DisablePhysicsMovement();
     ent->SetGravity( 0 );
@@ -105,7 +110,7 @@ CShipEntity * CTOFNContext::CreateRandomEnemyEntity()
 
     ent->SetClassTypeID( ENTTYPE_ENEMY );
     ent->SetClassType( "EN" );
-    ent->CreatePhysicsBody( &m_PhysicsWorld, 64, 64 );
+    ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 64, 64 );
     ent->SetMaterial( m_pTextureFactory->GetObjectContent( "ENEMYSPRITE.png" ) );
     ent->DisablePhysicsMovement();
     ent->SetGravity( 0 );
@@ -140,42 +145,37 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 {
 
     //Due to the way our collision callback functions, entA is always a player ship or enemy ship
-    CWorldEntity * entA = static_cast< CShipEntity * >( pEntityA );
-    CWorldEntity * entB = NULL;
+    CShipEntity * entA = static_cast< CShipEntity * >( pEntityA );
 
-    if( entTypeB & ( ENTTYPE_ENBULLET | ENTTYPE_PLYBULLET ) )
-        entB = static_cast< CAIEntity * >( pEntityB );
-    else if( entTypeB & ENTTYPE_ENEMY )
-        entB = static_cast< CShipEntity * >( pEntityB );
-    else
-        return; //Should never happen
+	//If entB is a bullet
+    if( entTypeB & ( ENTTYPE_PLYBULLET | ENTTYPE_PLYBULLET ) )
+    {
 
+		CAIEntity * bulletEnt = static_cast< CAIEntity * >( pEntityB );
+		CBulletAI * bulletAI = static_cast< CBulletAI * >( bulletEnt->GetAIController() );
+
+        entA->Damage( bulletAI->GetDamage() );
+        m_pEntityManager->DeleteEntity( bulletEnt );
+
+		return;
+
+    } 
+
+	//If entity A is a player
     if( entTypeA & ENTTYPE_PLAYER )
     {
 
         if( entTypeB & ENTTYPE_ENEMY )
         {
 
-            m_pEntityManager->DeleteEntity( entB );
+            
 
-        } else if( entTypeB & ENTTYPE_ENBULLET )
-        {
+        } 
 
-            entA->Damage( static_cast< CBulletAI * >( entB->GetAIController() )->GetDamage() );
-            m_pEntityManager->DeleteEntity( entB );
-
-        }
-
+	//If entity A is an enemy
     } else if( entTypeA & ENTTYPE_ENEMY )
     {
 
-        if( entTypeB & ENTTYPE_PLYBBULLET )
-        {
-
-            entA->Damage( static_cast< CBulletAI * >( entB->GetAIController() )->GetDamage() );
-            m_pEntityManager->DeleteEntity( entB );
-
-        }
 
     }
 

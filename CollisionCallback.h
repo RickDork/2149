@@ -2,7 +2,9 @@
 #define COLLISIONCALLBACK_H_
 
 #include <Box2D/Box2D.h>
-#include "EntityContext.h"
+#include "SoraIncludes.h"
+#include "ShipEntity.h"
+#include "Entity.h"
 
 class CCollisionCallback : public b2ContactListener
 {
@@ -21,7 +23,7 @@ public:
 
     }
 
-    CCollisionCallback : b2ContactListener(), m_pContext( NULL )
+    CCollisionCallback() : b2ContactListener(), m_pContext( NULL )
     {
 
 

@@ -1,7 +1,7 @@
 #ifndef SHIPENTITY_H_
-#define SHIPENTITY_H
+#define SHIPENTITY_H_
 
-#include "SorinIncludes.h"
+#include "SoraIncludes.h"
 
 class CShipEntity : public CAIEntity
 {
@@ -10,11 +10,11 @@ protected:
 
     int m_Health;
 
-    std::vector< Vector3 > m_GunPositions;
+    std::vector< Vector3< float > > m_GunPositions;
 
 public:
 
-    CShipEntity() : CWorldEntity(), m_Health( 100 )
+    CShipEntity() : CAIEntity(), m_Health( 100 )
     {
 
     }
@@ -22,11 +22,11 @@ public:
     void AddGun( float x, float y )
     {
 
-        m_GunPositions.push_back( Vector3( x, y ) );
+        m_GunPositions.push_back( Vector3< float >( x, y ) );
 
     }
 
-    const std::vector< Vector3 > & GetGunPositions()
+    const std::vector< Vector3< float > > & GetGunPositions()
     {
 
         return m_GunPositions;

@@ -16,6 +16,9 @@ public:
     virtual  CAIEntity * FireBulletFrom( int type, float x, float y, int dmg, float speed ) = 0;
     virtual void FireBulletFrom( int type, CShipEntity * pShip, int dmg, float speed ) = 0;
 
+	CLuaContext() : CGameContext() { }
+	virtual ~CLuaContext() { }
+
 };
 
 #endif

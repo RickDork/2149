@@ -28,6 +28,7 @@ void CTOFNEntityManager::DrawAllEntities()
         if( ( *i ).GetContent()->IsActive() )
             ( *i ).GetContent()->Draw();
 
+		
     }
 
 }
