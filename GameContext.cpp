@@ -1,6 +1,7 @@
 #include "GameContext.h"
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 10 ), m_CurEnemyCount( 0 )
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 10 ), m_CurEnemyCount( 0 ),
+                               m_MaxStars( 1000 )
 {
 
 }
@@ -19,6 +20,42 @@ void CTOFNContext::InitializeLua()
 
     m_Lua.Initialize();
     SetLuaContext( this );
+
+}
+
+
+void CTOFNContext::InitializeGraphics()
+{
+
+    int id = m_pGraphicsContext->LoadShaderProgram( "star.v", "star.f" );
+    int width, height;
+
+     m_pGraphicsContext->GetWindowSize( &width, &height );
+
+    glGenBuffers( 1, &m_InstancedBuffer );
+	glEnableVertexAttribArray( 1 );
+	glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, ( void * )0 );
+	glVertexAttribDivisor( 1, 1 );
+
+    glGenBuffers( 1, &m_InstancedRGBABuffer );
+	glEnableVertexAttribArray( 2 );
+	glVertexAttribPointer( 2, 4, GL_FLOAT, GL_FALSE, 0, ( void * )0 );
+	glVertexAttribDivisor( 2, 1 );
+
+    for( int j = 1; j >= 0; j-- )
+    {
+
+        int id = m_pGraphicsContext->GetShaderIDFromIndex( j );
+
+        m_pDrawContext->UseShaderProgram( id );
+
+        m_pDrawContext->Calculate2DProjectionMatrix( width, height );
+
+        CMatrix< float > viewMat;
+        viewMat.Identity();
+        m_pDrawContext->UpdateViewMatrix( &viewMat );
+
+    }
 
 }
 
@@ -60,7 +97,7 @@ void CTOFNContext::FireBulletFrom( int type, CShipEntity * pShip, int dmg, float
     const std::vector< Vector3< float > > & GunPos = pShip->GetGunPositions();
     float pX, pY;
 
-    pShip->GetPos().Get( &pX, &pY, &pY );
+    pShip->GetPos().Get( &pX, &pY );
 
     for( int j = 0; j < GunPos.size(); j++ )
     {
@@ -106,7 +143,7 @@ CShipEntity * CTOFNContext::CreateRandomEnemyEntity()
 {
 
     CShipEntity * ent = new CShipEntity;
-    CAIController * aic = new CEnemyAI;
+    CEnemyAI * aic = new CEnemyAI;
 
     ent->SetClassTypeID( ENTTYPE_ENEMY );
     ent->SetClassType( "EN" );
@@ -147,7 +184,6 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
     //Due to the way our collision callback functions, entA is always a player ship or enemy ship
     CShipEntity * entA = static_cast< CShipEntity * >( pEntityA );
 
-	//If entB is a bullet
     if( entTypeB & ( ENTTYPE_PLYBULLET | ENTTYPE_PLYBULLET ) )
     {
 
@@ -159,23 +195,57 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 
 		return;
 
-    } 
-
-	//If entity A is a player
-    if( entTypeA & ENTTYPE_PLAYER )
+    } else if( entTypeA & ENTTYPE_PLAYER && entTypeB & ENTTYPE_POWERUP )
     {
 
-        if( entTypeB & ENTTYPE_ENEMY )
+
+
+
+    } else if( entTypeB & ENTTYPE_ENEMY )
+    {
+
+        CShipEntity * shipEnt = static_cast< CShipEntity * >( pEntityB );
+
+        //If entity A is a player
+        if( entTypeA & ENTTYPE_PLAYER )
         {
 
-            
 
-        } 
 
-	//If entity A is an enemy
-    } else if( entTypeA & ENTTYPE_ENEMY )
+        //If entity A is an enemy
+        } else if( entTypeA & ENTTYPE_ENEMY )
+        {
+
+
+        }
+
+    }
+
+}
+
+void CTOFNContext::CreateStarBackground()
+{
+
+    int winWidth, winHeight;
+
+    m_pGraphicsContext->GetWindowSize( &winWidth, &winHeight );
+
+    for( int j = 0; j < m_MaxStars; j++ )
     {
 
+        CStar * s = new CStar;
+
+        s->m_X = Util::RandomNumber( 0, winWidth );
+        s->m_Y = Util::RandomNumber( 0, winHeight );
+
+        s->m_R = 1.0f;
+        s->m_G = 1.0f;
+        s->m_B = 1.0f;
+        s->m_A = 1.0f;
+
+        s->m_Speed = Util::RandomNumber( 300, 1400 );
+
+        m_pStars.push_back( s );
 
     }
 
@@ -214,6 +284,49 @@ void CTOFNContext::UpdateAllEntities()
         }
 
     }
+
+}
+
+void CTOFNContext::DrawStarBackground()
+{
+
+    m_pTextureFactory->GetObjectContent( "star.png" )->Bind();
+
+    Vector2< float > starVert[m_MaxStars];
+    Vector4< float > startColor[m_MaxStars];
+    int n = 0;
+
+    for( ; n < m_MaxStars; n++ )
+    {
+
+        CStar * s = m_pStars[n];
+        starVert[n].Set( s->m_X, s->m_Y );
+        starColor[n].Set( s->m_R, s->m_G, s->m_B, s->m_A );
+
+        //We'll update in the same loop to save some cpu cycles
+        s->m_Y += s->m_Speed * m_FrameDelta;
+
+        if( s->m_Y > 800.0f )
+        {
+
+            s->m_X = Util::RandomNumber( 0, width );
+            s->m_Y = Util::RandomNumber( -height, -5 );
+
+        }
+
+    }
+
+    glBindBuffer( GL_ARRAY_BUFFER, m_InstancedBuffer );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( Vertex2 ) * n, starVert, GL_DYNAMIC_DRAW );
+
+    glBindBuffer( GL_ARRAY_BUFFER, m_InstancedRGBABuffer );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( Vertex4 ) * n, starColor, GL_DYNAMIC_DRAW );
+
+    m_pDrawContext->GetShaderIDFromIndex( 1 );
+
+    glDrawElementsInstancedBaseVertex( GL_TRIANGLE_STRIP, 6, GL_UNSIGNED_SHORT, ( void * )0, n, 0 );
+
+    m_pDrawContext->GetShaderIDFromIndex( 0 );
 
 }
 

@@ -20,7 +20,13 @@ void CTOFNLua::CallEngineFunction( const char * f )
 LuaCallBackFunction( GenerateEnemy )
 {
 
-    gLuaContext->CreateRandomEnemyEntity();
+    int n = 1;
+
+    if( LArgCount() >= 1 )
+        n = LNumber( 1 );
+
+    for( int j = 0; j < n; j++ )
+        gLuaContext->CreateRandomEnemyEntity();
 
     return 0;
 

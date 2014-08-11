@@ -14,6 +14,7 @@ void CGameState::Init()
 
     m_pGameContext->InitializePhysicsWorld();
     m_pGameContext->InitializeLua();
+    m_pGameContext->InitializeGraphics();
 
     m_bInit = true;
 
@@ -27,11 +28,6 @@ void CGameState::PostInit()
 	m_pGameContext->TextureFactory()->NewTexture( "PLAYERSPRITE.png" );
 
     m_pPlayerEntity = m_pGameContext->CreatePlayerEntity();
-
-	//Our view mat never changes, set it once.
-	CMatrix< float > viewMat;
-	viewMat.Identity();
-	m_pGameContext->DrawContext()->UpdateViewMatrix( &viewMat );
 
     m_bPostInit = true;
 
@@ -85,6 +81,8 @@ void CGameState::Draw()
 {
 
     m_pGameContext->GraphicsContext()->ClearBuffer();
+
+        m_pGameContext->DrawStarBackground();
 
         m_pGameContext->EntityManager()->DrawAllEntities();
 

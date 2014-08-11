@@ -9,6 +9,7 @@ enum
     ENTTYPE_ENEMY = 0x02,
     ENTTYPE_ENBULLET = 0x04,
     ENTTYPE_PLYBULLET = 0x08,
+    ENTTYPE_POWERUP = 0x10,
 
 };
 

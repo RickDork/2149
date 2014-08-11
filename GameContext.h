@@ -10,6 +10,7 @@
 #include "ShipEntity.h"
 #include "Lua.h"
 #include "LuaContext.h"
+#include "Star.h"
 
 class CTOFNContext : public CLuaContext
 {
@@ -19,6 +20,10 @@ private:
     CShipEntity * m_pPlayerEntity;
     int m_MaxEnemyCount;
     int m_CurEnemyCount;
+
+    boost::ptr_vector< CStar > m_pStars;
+    const int m_MaxStars;
+    int m_InstancedBuffer, m_InstancedRGBABuffer;
 
     CTOFNLua m_Lua;
     CPhysicsWorld m_PhysicsWorld;
@@ -30,6 +35,7 @@ public:
 
     void InitializePhysicsWorld();
     void InitializeLua();
+    void InitializeGraphics();
 
     CShipEntity * GetPlayerEntity()
     {
@@ -39,6 +45,9 @@ public:
     }
 
     void UpdateAllEntities();
+
+    void CreateStarBackground();
+    void DrawStarBackground();
 
     CShipEntity * CreatePlayerEntity();
     CShipEntity * CreateRandomEnemyEntity();
