@@ -12,6 +12,8 @@
 #include "LuaContext.h"
 #include "Star.h"
 
+#define MAX_STARS 1500
+
 class CTOFNContext : public CLuaContext
 {
 
@@ -22,14 +24,15 @@ private:
     int m_CurEnemyCount;
 
     boost::ptr_vector< CStar > m_pStars;
-    const int m_MaxStars;
-    int m_InstancedBuffer, m_InstancedRGBABuffer;
+    GLuint m_InstancedBuffer, m_InstancedRGBABuffer;
 
     CTOFNLua m_Lua;
     CPhysicsWorld m_PhysicsWorld;
     CCollisionCallback m_CollisionCallback;
 
     void DoEnemyGenerator();
+
+	void RandomizeStar( CStar * );
 
 public:
 

@@ -26,8 +26,13 @@ void CGameState::PostInit()
     Log::Debug( "Doing game state post-init" );
 
 	m_pGameContext->TextureFactory()->NewTexture( "PLAYERSPRITE.png" );
+	m_pGameContext->TextureFactory()->NewTexture("star.png");
+	m_pGameContext->TextureFactory()->NewTexture("bullet.png");
+	m_pGameContext->TextureFactory()->NewTexture("Enemy.png");
 
     m_pPlayerEntity = m_pGameContext->CreatePlayerEntity();
+
+	m_pGameContext->CreateStarBackground();
 
     m_bPostInit = true;
 
@@ -40,8 +45,8 @@ void CGameState::Input()
 
     m_GameInput.Poll();
 
-    static const float plyMoveSpeedX = 100.0f;
-    static const float plyMoveSpeedY = 100.0f;
+    static const float plyMoveSpeedX = 400.0f;
+    static const float plyMoveSpeedY = 400.0f;
 
     if( m_GameInput.KeyDown( SDL_SCANCODE_A ) )
         m_pPlayerEntity->Displace( -1.0f * plyMoveSpeedX * m_pGameContext->GetFrameDelta(), 0.0f );

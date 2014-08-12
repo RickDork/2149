@@ -1,7 +1,6 @@
 #include "GameContext.h"
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 10 ), m_CurEnemyCount( 0 ),
-                               m_MaxStars( 1000 )
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 25 ), m_CurEnemyCount( 0 )
 {
 
 }
@@ -33,14 +32,23 @@ void CTOFNContext::InitializeGraphics()
      m_pGraphicsContext->GetWindowSize( &width, &height );
 
     glGenBuffers( 1, &m_InstancedBuffer );
-	glEnableVertexAttribArray( 1 );
-	glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, ( void * )0 );
-	glVertexAttribDivisor( 1, 1 );
+	glBindBuffer( GL_ARRAY_BUFFER, m_InstancedBuffer );
+
+	for( int j = 0; j < 4; j++ )
+	{
+
+		glEnableVertexAttribArray( j + 1 );
+		glVertexAttribPointer( j + 1, 4, GL_FLOAT, GL_FALSE, sizeof( float ) * 16, ( const GLvoid * )( sizeof( float ) * 4 * j ) );
+		glVertexAttribDivisor( j + 1, 1 );
+
+	}
 
     glGenBuffers( 1, &m_InstancedRGBABuffer );
-	glEnableVertexAttribArray( 2 );
-	glVertexAttribPointer( 2, 4, GL_FLOAT, GL_FALSE, 0, ( void * )0 );
-	glVertexAttribDivisor( 2, 1 );
+	glBindBuffer( GL_ARRAY_BUFFER, m_InstancedRGBABuffer );
+
+	glEnableVertexAttribArray( 5 );
+	glVertexAttribPointer( 5, 4, GL_FLOAT, GL_FALSE, 0, ( void * )0 );
+	glVertexAttribDivisor( 5, 1 );
 
     for( int j = 1; j >= 0; j-- )
     {
@@ -72,6 +80,7 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
     ent->SetClassTypeID( ENTTYPE_PLAYER );
 	ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 64, 64 );
     ent->SetMaterial( m_pTextureFactory->GetObjectContent( "PLAYERSPRITE.png" ) );
+	ent->SetSize( 80, 80 );
     ent->DisablePhysicsMovement();
     ent->SetGravity( 0 );
     ent->SetPos( defaultPlayerPosX, defaultPlayerPosY );
@@ -121,10 +130,11 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, int dmg, f
     aic->SetDamage( dmg );
     aic->SetDirection( ( type & ENTTYPE_ENBULLET )? DIR_DOWN : DIR_UP );
 
+	ent->SetContext( this );
     ent->SetClassTypeID( type );
     ent->SetClassType( "BLT" );
 	ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 5, 5 );
-    ent->SetMaterial( m_pTextureFactory->GetObjectContent( "BULLET.png" ) );
+    ent->SetMaterial( m_pTextureFactory->GetObjectContent( "bullet.png" ) );
     ent->DisablePhysicsMovement();
     ent->SetGravity( 0 );
     ent->SetPos( x, y );
@@ -133,7 +143,6 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, int dmg, f
     ent->SetAIController( aic );
 
     m_pEntityManager->AddEntity( ent );
-    m_pEntityManager->TrackEntity( "BLT", ent );
 
     return ent;
 
@@ -145,13 +154,15 @@ CShipEntity * CTOFNContext::CreateRandomEnemyEntity()
     CShipEntity * ent = new CShipEntity;
     CEnemyAI * aic = new CEnemyAI;
 
+	ent->SetContext( this );
     ent->SetClassTypeID( ENTTYPE_ENEMY );
     ent->SetClassType( "EN" );
-    ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 64, 64 );
-    ent->SetMaterial( m_pTextureFactory->GetObjectContent( "ENEMYSPRITE.png" ) );
+    ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 70, 70 );
+    ent->SetMaterial( m_pTextureFactory->GetObjectContent( "Enemy.png" ) );
+	ent->SetSize( 70, 70 );
     ent->DisablePhysicsMovement();
     ent->SetGravity( 0 );
-    ent->SetPos( Util::RandomNumber( 100, 810 ), Util::RandomNumber( -500, -200 ) );
+    ent->SetPos( Util::RandomNumber( 100, 810 ), Util::RandomNumber( -500, -100 ) );
 
     aic->SetTargetEntity( ent );
     ent->SetAIController( aic );
@@ -184,42 +195,61 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
     //Due to the way our collision callback functions, entA is always a player ship or enemy ship
     CShipEntity * entA = static_cast< CShipEntity * >( pEntityA );
 
-    if( entTypeB & ( ENTTYPE_PLYBULLET | ENTTYPE_PLYBULLET ) )
-    {
+	CAIEntity * bulletEnt = NULL; 
+	CBulletAI * bulletAI = NULL;
+	CShipEntity * shipEnt = NULL;
 
-		CAIEntity * bulletEnt = static_cast< CAIEntity * >( pEntityB );
-		CBulletAI * bulletAI = static_cast< CBulletAI * >( bulletEnt->GetAIController() );
+	bool playerInvolved = ( entTypeA & ( ENTTYPE_PLAYER ) );
+	bool bulletCollision = ( entTypeB & ( ENTTYPE_PLYBULLET | ENTTYPE_PLYBULLET ) );
+	bool playerBullet = ( entTypeB & ( ENTTYPE_PLYBULLET ) );
+
+	if( bulletCollision )
+	{
+
+		bulletEnt = static_cast< CAIEntity * >( pEntityB );
+		bulletAI = static_cast< CBulletAI * >( bulletEnt->GetAIController() );
+
+	} else
+	{
+
+		shipEnt = static_cast< CShipEntity * >( pEntityB );
+
+	}
+	
+	if( playerInvolved )
+	{
+
+		if( bulletCollision )
+		{
+
+			if( !playerBullet )
+			{
+
+				entA->Damage( bulletAI->GetDamage() );
+				m_pEntityManager->DeleteEntity( bulletEnt );
+
+			}
+
+		} else if( entTypeB & ENTTYPE_POWERUP )
+		{
+
+
+
+
+		} else
+		{
+
+		}
+
+	} else if( bulletCollision )
+    {
 
         entA->Damage( bulletAI->GetDamage() );
         m_pEntityManager->DeleteEntity( bulletEnt );
 
 		return;
 
-    } else if( entTypeA & ENTTYPE_PLAYER && entTypeB & ENTTYPE_POWERUP )
-    {
-
-
-
-
-    } else if( entTypeB & ENTTYPE_ENEMY )
-    {
-
-        CShipEntity * shipEnt = static_cast< CShipEntity * >( pEntityB );
-
-        //If entity A is a player
-        if( entTypeA & ENTTYPE_PLAYER )
-        {
-
-
-
-        //If entity A is an enemy
-        } else if( entTypeA & ENTTYPE_ENEMY )
-        {
-
-
-        }
-
-    }
+    } 
 
 }
 
@@ -230,24 +260,50 @@ void CTOFNContext::CreateStarBackground()
 
     m_pGraphicsContext->GetWindowSize( &winWidth, &winHeight );
 
-    for( int j = 0; j < m_MaxStars; j++ )
+    for( int j = 0; j < MAX_STARS; j++ )
     {
 
         CStar * s = new CStar;
 
         s->m_X = Util::RandomNumber( 0, winWidth );
-        s->m_Y = Util::RandomNumber( 0, winHeight );
+        s->m_Y = Util::RandomNumber( -500, winHeight );
 
-        s->m_R = 1.0f;
-        s->m_G = 1.0f;
-        s->m_B = 1.0f;
-        s->m_A = 1.0f;
-
-        s->m_Speed = Util::RandomNumber( 300, 1400 );
+		RandomizeStar( s );
 
         m_pStars.push_back( s );
 
     }
+
+}
+
+void CTOFNContext::RandomizeStar( CStar * s )
+{
+
+	s->m_Size = Util::RandomNumber( 1, 3 );
+
+	int c = Util::RandomNumber( 0, 25 );
+
+	s->m_R = 1.0f;
+	s->m_G = 1.0f;
+	s->m_B = 1.0f;
+
+	if( c == 5 )
+	{
+
+		s->m_G = 0.7f;
+		s->m_B = 0.7f;
+
+	} else if( c == 12 )
+	{
+
+		s->m_R = 0.7f;
+		s->m_G = 0.7f;
+		
+	}
+
+	s->m_A = ( float )Util::RandomNumber( 20, 180 ) / 255.0f;
+
+	s->m_Speed = Util::RandomNumber( 50, 200 );
 
 }
 
@@ -272,14 +328,23 @@ void CTOFNContext::UpdateAllEntities()
 
                 CShipEntity * pShip = static_cast< CShipEntity * >( ( *i ).GetContent() );
 
-                if( pShip->GetHealth() <= 0 )
+                if( pShip->GetHealth() <= 0 || pShip->GetPos().GetY() > 650 )
                 {
 
                     m_pEntityManager->DeleteEntity( pShip );
+					m_CurEnemyCount--;
 
                 }
 
-            }
+            } else if( type & ( ENTTYPE_ENBULLET | ENTTYPE_PLYBULLET ) )
+			{
+
+				CAIEntity * pBullet = static_cast< CAIEntity * >( ( *i ).GetContent() );
+
+				if( pBullet->GetPos().GetY() > 600 || pBullet->GetPos().GetY() < 0 )
+					m_pEntityManager->DeleteEntity( pBullet );
+
+			}
 
         }
 
@@ -292,16 +357,31 @@ void CTOFNContext::DrawStarBackground()
 
     m_pTextureFactory->GetObjectContent( "star.png" )->Bind();
 
-    Vector2< float > starVert[m_MaxStars];
-    Vector4< float > startColor[m_MaxStars];
+	int width, height;
+
+	m_pGraphicsContext->GetWindowSize( &width, &height );
+
+	float starMat[MAX_STARS][16];
+    float starColor[MAX_STARS][4];
     int n = 0;
 
-    for( ; n < m_MaxStars; n++ )
+    for( ; n < MAX_STARS; n++ )
     {
 
-        CStar * s = m_pStars[n];
-        starVert[n].Set( s->m_X, s->m_Y );
-        starColor[n].Set( s->m_R, s->m_G, s->m_B, s->m_A );
+        CStar * s = &m_pStars[n];
+
+		CMatrix< float > mat;
+		mat.Identity();
+        mat.SetTranslate( s->m_X, s->m_Y, 0.0f );
+		mat.Scale( s->m_Size, s->m_Size, 1.0f );
+
+		float * rawStarMat = mat.GetRawMatrix(); 
+		std::copy( rawStarMat, rawStarMat + 16, starMat[n] );
+
+        starColor[n][0] = s->m_R;
+		starColor[n][1] = s->m_G;
+		starColor[n][2] = s->m_B;
+		starColor[n][3] = s->m_A;
 
         //We'll update in the same loop to save some cpu cycles
         s->m_Y += s->m_Speed * m_FrameDelta;
@@ -312,21 +392,24 @@ void CTOFNContext::DrawStarBackground()
             s->m_X = Util::RandomNumber( 0, width );
             s->m_Y = Util::RandomNumber( -height, -5 );
 
+			RandomizeStar( s );
+
         }
+
 
     }
 
     glBindBuffer( GL_ARRAY_BUFFER, m_InstancedBuffer );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( Vertex2 ) * n, starVert, GL_DYNAMIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( float ) * n * 16, starMat, GL_DYNAMIC_DRAW );
 
     glBindBuffer( GL_ARRAY_BUFFER, m_InstancedRGBABuffer );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( Vertex4 ) * n, starColor, GL_DYNAMIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( float ) * n * 4, starColor, GL_DYNAMIC_DRAW );
 
-    m_pDrawContext->GetShaderIDFromIndex( 1 );
+    m_pDrawContext->UseShaderProgram( m_pGraphicsContext->GetShaderIDFromIndex( 1 ) );
 
     glDrawElementsInstancedBaseVertex( GL_TRIANGLE_STRIP, 6, GL_UNSIGNED_SHORT, ( void * )0, n, 0 );
 
-    m_pDrawContext->GetShaderIDFromIndex( 0 );
+	m_pDrawContext->UseShaderProgram( m_pGraphicsContext->GetShaderIDFromIndex( 0 ) );
 
 }
 
@@ -337,7 +420,7 @@ void CTOFNContext::GameLogic()
 
     UpdateAllEntities();
 
-    //DoEnemyGenerator();
+    DoEnemyGenerator();
 
     m_Lua.CallEngineFunction( "GameLogic" );
 
