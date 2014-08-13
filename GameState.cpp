@@ -25,7 +25,7 @@ void CGameState::PostInit()
 
     Log::Debug( "Doing game state post-init" );
 
-	m_pGameContext->TextureFactory()->NewTexture( "PLAYERSPRITE.png" );
+	m_pGameContext->TextureFactory()->NewTexture( "player2.png" );
 	m_pGameContext->TextureFactory()->NewTexture("star.png");
 	m_pGameContext->TextureFactory()->NewTexture("bullet.png");
 	m_pGameContext->TextureFactory()->NewTexture("Enemy.png");
@@ -63,7 +63,13 @@ void CGameState::Input()
     if( m_GameInput.KeyDown( SDL_SCANCODE_SPACE ) )
     {
 
-        m_pGameContext->FireBulletFrom( ENTTYPE_PLYBULLET, m_pPlayerEntity, 5, 600.0f );
+		if( m_pPlayerEntity->CanShoot() )
+		{
+
+			m_pGameContext->FireBulletFrom( ENTTYPE_PLYBULLET, m_pPlayerEntity, 5, 600.0f );
+			m_pPlayerEntity->SetNextShotTime( SDL_GetTicks() + 300 );
+
+		}
 
     }
 

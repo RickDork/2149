@@ -1,0 +1,29 @@
+[DEBUG]=======================APPLICATION INITIALIZING=======================
+Creating windows handle
+Initializing OpenGL
+Loading shaders: vertex.v, fragment.f
+[ERROR]Attempted to read non-existant file: vertex.v
+Successfully loaded shader: vertex.v
+[ERROR]Attempted to read non-existant file: fragment.f
+Successfully loaded shader: fragment.f
+Shaders loaded
+[DEBUG]Draw Context initialized
+[DEBUG]Game Context initialized
+[DEBUG]State Machine initialized
+Starting main loop
+[DEBUG]Doing game state init
+Lua Initialized
+Loading shaders: star.v, star.f
+[ERROR]Attempted to read non-existant file: star.v
+Successfully loaded shader: star.v
+[ERROR]Attempted to read non-existant file: star.f
+Successfully loaded shader: star.f
+Shaders loaded
+[DEBUG]Doing game state post-init
+[ERROR]Failed loading material: PLAYERSPRITE.png
+[ERROR]Failed loading material: star.png
+[ERROR]Failed loading material: bullet.png
+[ERROR]Failed loading material: Enemy.png
+[DEBUG]Creating player entity
+[DEBUG]Created player entity
+[DEBUG]Ready to do game loop

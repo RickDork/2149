@@ -1,6 +1,6 @@
 #include "GameContext.h"
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 25 ), m_CurEnemyCount( 0 )
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 )
 {
 
 }
@@ -79,13 +79,14 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
 	ent->SetContext( this );
     ent->SetClassTypeID( ENTTYPE_PLAYER );
 	ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 64, 64 );
-    ent->SetMaterial( m_pTextureFactory->GetObjectContent( "PLAYERSPRITE.png" ) );
+    ent->SetMaterial( m_pTextureFactory->GetObjectContent( "player2.png" ) );
 	ent->SetSize( 80, 80 );
     ent->DisablePhysicsMovement();
     ent->SetGravity( 0 );
     ent->SetPos( defaultPlayerPosX, defaultPlayerPosY );
 
-    ent->AddGun( 32.0f, 12.0f );
+    ent->AddGun( .3f, .23f );
+	ent->AddGun( .7f, .23f );
 
     if( m_pPlayerEntity )
         m_pEntityManager->RemoveEntity( m_pPlayerEntity );
@@ -162,6 +163,7 @@ CShipEntity * CTOFNContext::CreateRandomEnemyEntity()
 	ent->SetSize( 70, 70 );
     ent->DisablePhysicsMovement();
     ent->SetGravity( 0 );
+	ent->SetHealth( 10 );
     ent->SetPos( Util::RandomNumber( 100, 810 ), Util::RandomNumber( -500, -100 ) );
 
     aic->SetTargetEntity( ent );
