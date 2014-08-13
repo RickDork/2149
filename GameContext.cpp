@@ -67,6 +67,50 @@ void CTOFNContext::InitializeGraphics()
 
 }
 
+void CTOFNContext::InitializeData()
+{
+
+    LoadEnemyData();
+
+}
+
+void CTOFNContext::LoadEnemyData()
+{
+
+    Log::Debug( "Reading enemy data" );
+
+    JsonObject jsonData;
+    jsonData.Open( "enemy.txt" );
+
+    rapidjson::Document & doc = jsonData.GetDocument();
+    int nEnemy = doc.Size();
+
+    for( int j = 0; j < nEnemy; j++ )
+    {
+
+        int health = doc[j]["health"].GetInt();
+        int speedmin = doc[j]["speedmin"].GetInt();
+        int speedmax = doc[j]["speedmax"].GetInt();
+        int width = doc[j]["size"][0];
+        int height = doc[j]["size"][1];
+
+        std::string sprite = doc[j]["sprite"].GetString();
+
+        int nGun = doc[j]["gun"].GetSize();
+        for( int i = 0; i < nGun; i++ )
+        {
+
+            rapidjson::Value & v = doc[j]["gun"][i];
+            //AddGun( v.["x"].GetDouble(), v.["y"].GetDouble() );
+
+        }
+
+    }
+
+    Log::Debug( "Done reading enemy data" );
+
+}
+
 CShipEntity * CTOFNContext::CreatePlayerEntity()
 {
 
@@ -197,7 +241,7 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
     //Due to the way our collision callback functions, entA is always a player ship or enemy ship
     CShipEntity * entA = static_cast< CShipEntity * >( pEntityA );
 
-	CAIEntity * bulletEnt = NULL; 
+	CAIEntity * bulletEnt = NULL;
 	CBulletAI * bulletAI = NULL;
 	CShipEntity * shipEnt = NULL;
 
@@ -217,7 +261,7 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 		shipEnt = static_cast< CShipEntity * >( pEntityB );
 
 	}
-	
+
 	if( playerInvolved )
 	{
 
@@ -251,7 +295,7 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 
 		return;
 
-    } 
+    }
 
 }
 
@@ -300,7 +344,7 @@ void CTOFNContext::RandomizeStar( CStar * s )
 
 		s->m_R = 0.7f;
 		s->m_G = 0.7f;
-		
+
 	}
 
 	s->m_A = ( float )Util::RandomNumber( 20, 180 ) / 255.0f;
@@ -377,7 +421,7 @@ void CTOFNContext::DrawStarBackground()
         mat.SetTranslate( s->m_X, s->m_Y, 0.0f );
 		mat.Scale( s->m_Size, s->m_Size, 1.0f );
 
-		float * rawStarMat = mat.GetRawMatrix(); 
+		float * rawStarMat = mat.GetRawMatrix();
 		std::copy( rawStarMat, rawStarMat + 16, starMat[n] );
 
         starColor[n][0] = s->m_R;

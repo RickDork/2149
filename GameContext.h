@@ -34,11 +34,14 @@ private:
 
 	void RandomizeStar( CStar * );
 
+	void LoadEnemyData();
+
 public:
 
     void InitializePhysicsWorld();
     void InitializeLua();
     void InitializeGraphics();
+    void InitializeData();
 
     CShipEntity * GetPlayerEntity()
     {

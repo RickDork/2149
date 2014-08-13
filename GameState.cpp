@@ -15,6 +15,7 @@ void CGameState::Init()
     m_pGameContext->InitializePhysicsWorld();
     m_pGameContext->InitializeLua();
     m_pGameContext->InitializeGraphics();
+    m_pGameContext->InitializeData();
 
     m_bInit = true;
 
