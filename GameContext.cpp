@@ -85,7 +85,7 @@ void CTOFNContext::LoadEnemyData()
     rapidjson::Document & doc = jsonData.GetDocument();
     int nEnemy = doc.Size();
 
-    for( int j = 0; j < nEnemy; j++ )
+    for( rapidjson::SizeType j = 0; j < nEnemy; j++ )
     {
 
 		CEnemyData d;
@@ -108,7 +108,7 @@ void CTOFNContext::LoadEnemyData()
 		{
 
 			rapidjson::Value & gunarray = doc[j]["gun"];
-		
+
 			if( gunarray.IsArray() )
 			{
 
@@ -184,6 +184,36 @@ void CTOFNContext::FireBulletFrom( int type, CShipEntity * pShip, int dmg, float
         FireBulletFrom( type, pX + x, pY + y, dmg, speed );
 
     }
+
+}
+
+CAnimEntity * CTOFNContext::CreateExplosion( int type, float x, float y )
+{
+
+    CAnimEntity * ent = new CAnimEntity;
+
+	ent->SetContext( this );
+    ent->SetClassTypeID( ENTTYPE_EXPLOSION );
+    ent->SetClassType( "XPL" );
+
+    std::string sprite = "explosion.png";
+
+    switch( type )
+    {
+    case 1:
+        //sprite = "";
+        break;
+
+    }
+
+    ent->SetMaterial( m_pTextureFactory->GetObjectContent( sprite ) );
+
+    ent->SetPos( x, y );
+    ent->SetAnimType( ANIMTYPE_KILLONEND );
+
+    m_pEntityManager->AddEntity( ent );
+
+    return ent;
 
 }
 

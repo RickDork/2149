@@ -9,8 +9,13 @@ void CTOFNEntityManager::UpdateAllEntities()
 		 i != entityObjs->end(); i++ )
     {
 
-        if( ( *i ).GetContent()->IsActive() )
-            ( *i ).GetContent()->Update();
+        CEntity * e = ( *i ).GetContent();
+
+        if( e->IsActive() )
+            e->Update();
+
+        if( e->KillMe() )
+            DeleteEntity( e );
 
     }
 
@@ -25,10 +30,12 @@ void CTOFNEntityManager::DrawAllEntities()
 		 i != entityObjs->end(); i++ )
     {
 
-        if( ( *i ).GetContent()->IsActive() )
-            ( *i ).GetContent()->Draw();
+        CEntity * e = ( *i ).GetContent();
 
-		
+        if( e->IsActive() && !e->GetEntityManagerDrawOverride() )
+            e->Draw();
+
+
     }
 
 }
