@@ -11,6 +11,7 @@
 #include "Lua.h"
 #include "LuaContext.h"
 #include "Star.h"
+#include "EnemyData.h"
 
 #define MAX_STARS 1500
 
@@ -29,6 +30,8 @@ private:
     CTOFNLua m_Lua;
     CPhysicsWorld m_PhysicsWorld;
     CCollisionCallback m_CollisionCallback;
+
+	std::vector< CEnemyData > m_EnemyData;
 
     void DoEnemyGenerator();
 
@@ -56,6 +59,7 @@ public:
     void DrawStarBackground();
 
     CShipEntity * CreatePlayerEntity();
+	CShipEntity * CreateEnemyEntity( int, float, float );
     CShipEntity * CreateRandomEnemyEntity();
     CAIEntity * FireBulletFrom( int, float, float, int, float );
     void FireBulletFrom( int, CShipEntity * , int, float );

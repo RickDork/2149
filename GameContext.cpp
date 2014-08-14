@@ -1,6 +1,6 @@
 #include "GameContext.h"
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 )
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 30 ), m_CurEnemyCount( 0 )
 {
 
 }
@@ -79,7 +79,7 @@ void CTOFNContext::LoadEnemyData()
 
     Log::Debug( "Reading enemy data" );
 
-    JsonObject jsonData;
+    CJsonObject jsonData;
     jsonData.Open( "enemy.txt" );
 
     rapidjson::Document & doc = jsonData.GetDocument();
@@ -88,22 +88,44 @@ void CTOFNContext::LoadEnemyData()
     for( int j = 0; j < nEnemy; j++ )
     {
 
-        int health = doc[j]["health"].GetInt();
-        int speedmin = doc[j]["speedmin"].GetInt();
-        int speedmax = doc[j]["speedmax"].GetInt();
-        int width = doc[j]["size"][0];
-        int height = doc[j]["size"][1];
+		CEnemyData d;
 
-        std::string sprite = doc[j]["sprite"].GetString();
+        d.m_Health = doc[j]["health"].GetInt();
+        d.m_SpeedMin = doc[j]["speedmin"].GetInt();
+        d.m_SpeedMax = doc[j]["speedmax"].GetInt();
+        d.m_Width = d.m_CollisionBoxWidth = doc[j]["width"].GetInt();
+        d.m_Height = d.m_CollisionBoxHeight = doc[j]["height"].GetInt();
 
-        int nGun = doc[j]["gun"].GetSize();
-        for( int i = 0; i < nGun; i++ )
-        {
+		if( doc[j].HasMember( "colwidth" ) )
+			d.m_CollisionBoxWidth = doc[j]["colwidth"].GetInt();
 
-            rapidjson::Value & v = doc[j]["gun"][i];
-            //AddGun( v.["x"].GetDouble(), v.["y"].GetDouble() );
+		if( doc[j].HasMember( "colheight" ) )
+			d.m_CollisionBoxHeight = doc[j]["colheight"].GetInt();
 
-        }
+        d.m_Sprite = doc[j]["sprite"].GetString();
+
+		if( doc[j].HasMember( "gun" ) )
+		{
+
+			rapidjson::Value & gunarray = doc[j]["gun"];
+		
+			if( gunarray.IsArray() )
+			{
+
+				rapidjson::SizeType nGun = doc[j]["gun"].Size();
+				for( rapidjson::SizeType i = 0; i < nGun; i++ )
+				{
+
+					rapidjson::Value & v = doc[j]["gun"][i];
+					d.m_GunPos.push_back( Vector2< float >( v["x"].GetDouble(), v["y"].GetDouble() ) );
+
+				}
+
+			}
+
+		}
+
+		m_EnemyData.push_back( d );
 
     }
 
@@ -196,19 +218,47 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, int dmg, f
 CShipEntity * CTOFNContext::CreateRandomEnemyEntity()
 {
 
+	int width, height;
+
+	m_pGraphicsContext->GetWindowSize( &width, &height );
+
+	int type = Util::RandomNumber( 0, m_EnemyData.size() - 1 );
+	float x = Util::RandomNumber( 10, width - 100 );
+	float y = Util::RandomNumber( -500, -100 );
+
+	return CreateEnemyEntity( type, x, y );
+
+}
+
+CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y )
+{
+
     CShipEntity * ent = new CShipEntity;
     CEnemyAI * aic = new CEnemyAI;
+
+	CEnemyData & d = m_EnemyData[type];
 
 	ent->SetContext( this );
     ent->SetClassTypeID( ENTTYPE_ENEMY );
     ent->SetClassType( "EN" );
-    ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 70, 70 );
-    ent->SetMaterial( m_pTextureFactory->GetObjectContent( "Enemy.png" ) );
-	ent->SetSize( 70, 70 );
+    ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), d.m_CollisionBoxWidth, d.m_CollisionBoxHeight );
+    ent->SetMaterial( m_pTextureFactory->GetObjectContent( d.m_Sprite ) );
+	ent->SetSize( d.m_Width, d.m_Height );
     ent->DisablePhysicsMovement();
     ent->SetGravity( 0 );
-	ent->SetHealth( 10 );
-    ent->SetPos( Util::RandomNumber( 100, 810 ), Util::RandomNumber( -500, -100 ) );
+	ent->SetHealth( d.m_Health );
+    ent->SetPos( x, y );
+
+	aic->SetSpeed( Util::RandomNumber( d.m_SpeedMin, d.m_SpeedMax ) );
+
+	std::vector< Vector2< float > > & v = d.m_GunPos;
+
+	for( int j = 0; j < v.size(); j++ )
+	{
+
+		ent->AddGun( v[j].GetX(), v[j].GetY() );
+
+	}
 
     aic->SetTargetEntity( ent );
     ent->SetAIController( aic );

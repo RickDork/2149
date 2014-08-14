@@ -6,9 +6,21 @@
 class CEnemyAI : public CAIController
 {
 
+	float m_Speed;
+
 public:
 
     void Think();
+
+	void SetSpeed( float spd )
+	{
+
+		m_Speed = spd;
+
+	}
+
+	CEnemyAI() : m_Speed( 100.0f )
+	{ }
 
 };
 

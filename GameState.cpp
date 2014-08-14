@@ -30,6 +30,9 @@ void CGameState::PostInit()
 	m_pGameContext->TextureFactory()->NewTexture("star.png");
 	m_pGameContext->TextureFactory()->NewTexture("bullet.png");
 	m_pGameContext->TextureFactory()->NewTexture("Enemy.png");
+	m_pGameContext->TextureFactory()->NewTexture("Enemy2.png");
+	m_pGameContext->TextureFactory()->NewTexture("Enemy3.png");
+	m_pGameContext->TextureFactory()->NewTexture("Enemy4.png");
 
     m_pPlayerEntity = m_pGameContext->CreatePlayerEntity();
 
