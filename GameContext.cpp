@@ -211,6 +211,8 @@ CAnimEntity * CTOFNContext::CreateExplosion( int type, float x, float y )
     ent->SetPos( x, y );
     ent->SetAnimType( ANIMTYPE_KILLONEND );
 
+    ent->SetDrawDepth( 5 );
+
     m_pEntityManager->AddEntity( ent );
 
     return ent;
@@ -296,8 +298,6 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y )
     m_pEntityManager->AddEntity( ent );
     m_pEntityManager->TrackEntity( "EN", ent );
 
-    m_CurEnemyCount++;
-
     return ent;
 
 }
@@ -309,9 +309,31 @@ void CTOFNContext::DoEnemyGenerator()
     for( int j = 0; j < n; j++ )
     {
 
-        CreateRandomEnemyEntity();
+        CShipEntity e * = CreateRandomEnemyEntity();
+        e->SetCountAsEnemy( true );
 
     }
+
+    m_CurEnemyCount = m_MaxEnemyCount;
+
+}
+
+void CTOFNContext::DestroyShip( CShipEntity * e, bool quiet )
+{
+
+    if( !quiet )
+    {
+
+        const Vector2< float > & pos = e->GetPos();
+
+        CreateExplosion( 0, pos.GetX(), pos.GetY() );
+
+    }
+
+    m_pEntityManager->DeleteEntity( e );
+
+    if( e->CountAsEnemy() )
+        m_CurEnemyCount--;
 
 }
 
@@ -446,6 +468,7 @@ void CTOFNContext::UpdateAllEntities()
         {
 
             ( *i ).GetContent()->Update();
+            m_pEntityManager->AddToDrawList( ( *i ).GetContent() );
 
             int type = ( *i ).GetContent()->GetClassTypeID();
 
@@ -454,11 +477,17 @@ void CTOFNContext::UpdateAllEntities()
 
                 CShipEntity * pShip = static_cast< CShipEntity * >( ( *i ).GetContent() );
 
-                if( pShip->GetHealth() <= 0 || pShip->GetPos().GetY() > 650 )
+                if( pShip->GetHealth() <= 0 )
                 {
 
-                    m_pEntityManager->DeleteEntity( pShip );
-					m_CurEnemyCount--;
+                    DestroyShip( pShip, false );
+
+                }
+
+                if( pShip->GetPos().GetY() > m_pGraphicsContext->GetWindowHeight() )
+                {
+
+                    DestroyShip( pShip, true );
 
                 }
 
@@ -467,7 +496,9 @@ void CTOFNContext::UpdateAllEntities()
 
 				CAIEntity * pBullet = static_cast< CAIEntity * >( ( *i ).GetContent() );
 
-				if( pBullet->GetPos().GetY() > 600 || pBullet->GetPos().GetY() < 0 )
+				if( ( pBullet->GetPos().GetY() < 0 && type & ENTTYPE_PLYBULLET ) ||
+                    ( pBullet->GetPos().GetY() < m_pGraphicsContext->GetWindowHeight() * -.5f && type & ENTTYPE_ENBULLET ) ||
+                    pBullet->GetPos().GetY() > m_pGraphicsContext->GetWindowHeight() )
 					m_pEntityManager->DeleteEntity( pBullet );
 
 			}

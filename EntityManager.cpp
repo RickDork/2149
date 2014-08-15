@@ -24,19 +24,32 @@ void CTOFNEntityManager::UpdateAllEntities()
 void CTOFNEntityManager::DrawAllEntities()
 {
 
-    boost::ptr_vector< CEntityObject > * entityObjs = &m_pRawEntityList.GetEntityObjects();
-
-	for( boost::ptr_vector< CEntityObject >::iterator i = entityObjs->begin();
-		 i != entityObjs->end(); i++ )
+	for( int i = 0; i < DRAW_DEPTH_MAX; i++ )
     {
 
-        CEntity * e = ( *i ).GetContent();
+        std::vector< CEntity * >::iterator iter = m_pDrawList[i].begin();
 
-        if( e->IsActive() && !e->GetEntityManagerDrawOverride() )
-            e->Draw();
+        for( ; iter != m_pDrawList[i].end(); iter++ )
+        {
+
+            CEntity * e = ( *i );
+
+            if( e->IsActive() && !e->GetEntityManagerDrawOverride() )
+                e->Draw();
+
+        }
+
+        m_pDrawList[i].clear();
 
 
     }
+
+}
+
+void CTOFNEntityManager::AddToDrawList( CEntity * ent )
+{
+
+    m_pDrawList[ent->GetDrawDepth()].push_back( ent );
 
 }
 

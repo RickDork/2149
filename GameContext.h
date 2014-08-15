@@ -58,8 +58,9 @@ public:
     void CreateStarBackground();
     void DrawStarBackground();
 
-    CAnimEntity * CreateExplosion( int, float, float );
+    void DestroyShip( CShipEntity *, bool );
 
+    CAnimEntity * CreateExplosion( int, float, float );
     CShipEntity * CreatePlayerEntity();
 	CShipEntity * CreateEnemyEntity( int, float, float );
     CShipEntity * CreateRandomEnemyEntity();

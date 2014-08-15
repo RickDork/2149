@@ -11,11 +11,12 @@ protected:
     int m_Health;
 
     std::vector< Vector3< float > > m_GunPositions;
+    bool m_bCountAsEnemy;
 	int m_NextShotTime;
 
 public:
 
-    CShipEntity() : CAIEntity(), m_Health( 100 )
+    CShipEntity() : CAIEntity(), m_Health( 100 ), m_bCountAsEnemy( false )
     {
 
     }
@@ -27,6 +28,19 @@ public:
 
 	}
 
+    bool CountAsEnemy()
+    {
+
+        return m_bCountAsEnemy;
+
+    }
+
+    void SetCountAsEnemy( bool b )
+    {
+
+        m_bCountAsEnemy = b;
+
+    }
 
 	void SetNextShotTime( int t )
 	{
