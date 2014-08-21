@@ -21,6 +21,7 @@ void CTOFNEntityManager::UpdateAllEntities()
 
 }
 
+
 void CTOFNEntityManager::DrawAllEntities()
 {
 

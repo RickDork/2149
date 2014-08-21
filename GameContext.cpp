@@ -468,7 +468,6 @@ void CTOFNContext::UpdateAllEntities()
         {
 
             ( *i ).GetContent()->Update();
-            m_pEntityManager->AddToDrawList( ( *i ).GetContent() );
 
             int type = ( *i ).GetContent()->GetClassTypeID();
 
