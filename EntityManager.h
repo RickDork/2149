@@ -12,11 +12,7 @@ class CTOFNEntityManager : public CEntityManager
 
 public:
 
-    void DeleteEntity( CEntity * );
-
-    void RemoveAllDeletedEntities();
     void UpdateAllEntities();
-    void DrawAllEntities();
 
 };
 

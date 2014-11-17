@@ -16,7 +16,7 @@ protected:
 
 public:
 
-    CShipEntity() : CAIEntity(), m_Health( 100 ), m_bCountAsEnemy( false )
+    CShipEntity() : CAIEntity(), m_Health( 100 ), m_bCountAsEnemy( false ), m_NextShotTime( 0 )
     {
 
     }

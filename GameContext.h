@@ -29,16 +29,20 @@ private:
 
     CTOFNLua m_Lua;
     CPhysicsWorld m_PhysicsWorld;
+    CTextureImage img;
     CCollisionCallback m_CollisionCallback;
 
 	std::vector< CEnemyData > m_EnemyData;
+    
+    bool bIter;
+    std::vector< CEntity * > bulletvec;
 
     void DoEnemyGenerator();
 
 	void RandomizeStar( CStar * );
 
 	void LoadEnemyData();
-
+ 
 public:
 
     void InitializePhysicsWorld();

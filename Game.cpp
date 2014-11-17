@@ -1,7 +1,10 @@
 #include "Game.h"
+#include <GLUT/GLUT.h>
 
 CGame::CGame()
 {
+    
+    Util::FixAppleRelativeDirectory();
 
     Log::ClearLog();
     Log::SetDebugLoggingEnabled( true );
@@ -9,10 +12,10 @@ CGame::CGame()
 	Log::Debug( "=======================APPLICATION INITIALIZING=======================" );
 
     m_GraphicsContext.SetDrawContext( &m_DrawContext );
-
+    
     m_GraphicsContext.CreateHandle( "2149", 0, 0, 800, 600, false );
     m_GraphicsContext.SetDrawMode( DrawMode::DRAW_MODE_2D );
-
+    
     int shaderID = m_GraphicsContext.LoadShaderProgram( "vertex.v", "fragment.f" );
     int width, height;
 

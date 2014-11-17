@@ -1,5 +1,10 @@
 #include "GameContext.h"
 
+
+#ifdef __APPLE__
+#include "CoreFoundation/CoreFoundation.h"
+#endif
+
 CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 30 ), m_CurEnemyCount( 0 )
 {
 
@@ -30,25 +35,27 @@ void CTOFNContext::InitializeGraphics()
     int width, height;
 
      m_pGraphicsContext->GetWindowSize( &width, &height );
-
+    
     glGenBuffers( 1, &m_InstancedBuffer );
+    
 	glBindBuffer( GL_ARRAY_BUFFER, m_InstancedBuffer );
-
+ 
 	for( int j = 0; j < 4; j++ )
 	{
-
-		glEnableVertexAttribArray( j + 1 );
-		glVertexAttribPointer( j + 1, 4, GL_FLOAT, GL_FALSE, sizeof( float ) * 16, ( const GLvoid * )( sizeof( float ) * 4 * j ) );
-		glVertexAttribDivisor( j + 1, 1 );
+		glEnableVertexAttribArray( j + 2 );
+        
+		glVertexAttribPointer( j + 2, 4, GL_FLOAT, GL_FALSE, sizeof( float ) * 16, ( const GLvoid * )( sizeof( float ) * 4 * j ) );
+		
+        glVertexAttribDivisor( j + 2, 1 );
 
 	}
 
     glGenBuffers( 1, &m_InstancedRGBABuffer );
 	glBindBuffer( GL_ARRAY_BUFFER, m_InstancedRGBABuffer );
 
-	glEnableVertexAttribArray( 5 );
-	glVertexAttribPointer( 5, 4, GL_FLOAT, GL_FALSE, 0, ( void * )0 );
-	glVertexAttribDivisor( 5, 1 );
+	glEnableVertexAttribArray( 6 );
+	glVertexAttribPointer( 6, 4, GL_FLOAT, GL_FALSE, 0, ( void * )0 );
+	glVertexAttribDivisor( 6, 1 );
 
     for( int j = 1; j >= 0; j-- )
     {
@@ -76,13 +83,14 @@ void CTOFNContext::InitializeData()
 
 void CTOFNContext::LoadEnemyData()
 {
-
+    
     Log::Debug( "Reading enemy data" );
 
     CJsonObject jsonData;
     jsonData.Open( "enemy.txt" );
 
     rapidjson::Document & doc = jsonData.GetDocument();
+  
     int nEnemy = doc.Size();
 
     for( rapidjson::SizeType j = 0; j < nEnemy; j++ )
@@ -150,6 +158,7 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
     ent->DisablePhysicsMovement();
     ent->SetGravity( 0 );
     ent->SetPos( defaultPlayerPosX, defaultPlayerPosY );
+    ent->SetDrawDepth( 1 );
 
     ent->AddGun( .3f, .23f );
 	ent->AddGun( .7f, .23f );
@@ -189,6 +198,7 @@ void CTOFNContext::FireBulletFrom( int type, CShipEntity * pShip, int dmg, float
 
 CAnimEntity * CTOFNContext::CreateExplosion( int type, float x, float y )
 {
+    /*
 
     CAnimEntity * ent = new CAnimEntity;
 
@@ -214,8 +224,10 @@ CAnimEntity * CTOFNContext::CreateExplosion( int type, float x, float y )
     ent->SetDrawDepth( 5 );
 
     m_pEntityManager->AddEntity( ent );
-
-    return ent;
+    
+    return ent; */
+    
+    return NULL;
 
 }
 
@@ -240,7 +252,10 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, int dmg, f
 
     aic->SetTargetEntity( ent );
     ent->SetAIController( aic );
-
+    
+    if( bIter )
+        bulletvec.push_back( ent );
+    else
     m_pEntityManager->AddEntity( ent );
 
     return ent;
@@ -280,7 +295,9 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y )
     ent->SetGravity( 0 );
 	ent->SetHealth( d.m_Health );
     ent->SetPos( x, y );
+    ent->SetDrawDepth( 1 );
 
+    aic->SetEntityContext( this );
 	aic->SetSpeed( Util::RandomNumber( d.m_SpeedMin, d.m_SpeedMax ) );
 
 	std::vector< Vector2< float > > & v = d.m_GunPos;
@@ -309,7 +326,7 @@ void CTOFNContext::DoEnemyGenerator()
     for( int j = 0; j < n; j++ )
     {
 
-        CShipEntity e * = CreateRandomEnemyEntity();
+        CShipEntity * e = CreateRandomEnemyEntity();
         e->SetCountAsEnemy( true );
 
     }
@@ -363,6 +380,9 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 		shipEnt = static_cast< CShipEntity * >( pEntityB );
 
 	}
+    
+    if( !entA->IsActive() || ( bulletCollision && !bulletEnt->IsActive() ) || ( !bulletCollision && !shipEnt->IsActive() ) )
+        return;
 
 	if( playerInvolved )
 	{
@@ -459,7 +479,7 @@ void CTOFNContext::UpdateAllEntities()
 {
 
     boost::ptr_vector< CEntityObject > * entityObjs = &m_pEntityManager->GetEntityObjects();
-
+    bIter = true;
 	for( boost::ptr_vector< CEntityObject >::iterator i = entityObjs->begin();
 		 i != entityObjs->end(); i++ )
     {
@@ -505,6 +525,14 @@ void CTOFNContext::UpdateAllEntities()
         }
 
     }
+    bIter = false;
+    for( int j = 0; j < bulletvec.size(); j++ ) {
+     
+        m_pEntityManager->AddEntity( bulletvec[j] );
+        
+    }
+    
+    bulletvec.clear();
 
 }
 
@@ -562,10 +590,11 @@ void CTOFNContext::DrawStarBackground()
     glBufferData( GL_ARRAY_BUFFER, sizeof( float ) * n * 4, starColor, GL_DYNAMIC_DRAW );
 
     m_pDrawContext->UseShaderProgram( m_pGraphicsContext->GetShaderIDFromIndex( 1 ) );
-
+    
     glDrawElementsInstancedBaseVertex( GL_TRIANGLE_STRIP, 6, GL_UNSIGNED_SHORT, ( void * )0, n, 0 );
 
 	m_pDrawContext->UseShaderProgram( m_pGraphicsContext->GetShaderIDFromIndex( 0 ) );
+    
 
 }
 

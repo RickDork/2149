@@ -101,6 +101,7 @@ void CGameState::Draw()
 
         m_pGameContext->EntityManager()->DrawAllEntities();
 
-    m_pGameContext->GraphicsContext()->SwapBuffers();
+   m_pGameContext->GraphicsContext()->SwapBuffers();
+
 
 }

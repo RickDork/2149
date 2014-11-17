@@ -2,12 +2,22 @@
 
 void CEnemyAI::Think()
 {
-
+    
+    CLuaContext * p = m_pEntityContext;
+    CShipEntity * s = ( CShipEntity * )m_pTargetEntity;
+    
     if( m_pTargetEntity )
     {
 
         m_pTargetEntity->Displace2( 0.0f, m_Speed );
-
+        
+        if( s->CanShoot() ) {
+            
+            s->SetNextShotTime( SDL_GetTicks() + Util::RandomNumber( 500, 1500 ) );
+            p->FireBulletFrom( ENTTYPE_ENBULLET, s, 0.0f, Util::RandomNumber( 350, 600 ) );
+    
+        }
+        
     }
 
 }
