@@ -12,6 +12,7 @@
 #include "LuaContext.h"
 #include "Star.h"
 #include "EnemyData.h"
+#include "ParticleExplosion.h"
 
 #define MAX_STARS 1500
 
@@ -25,7 +26,10 @@ private:
     int m_CurEnemyCount;
 
     boost::ptr_vector< CStar > m_pStars;
-    GLuint m_InstancedBuffer, m_InstancedRGBABuffer;
+    boost::ptr_vector< CParticleExplosion > m_pExplosions;
+    
+    CInstancedParticleEngine m_StarEngine;
+    //GLuint m_InstancedBuffer, m_InstancedRGBABuffer;
 
     CTOFNLua m_Lua;
     CPhysicsWorld m_PhysicsWorld;
@@ -58,13 +62,15 @@ public:
     }
 
     void UpdateAllEntities();
+    void UpdateExplosions();
 
     void CreateStarBackground();
     void DrawStarBackground();
+    void DrawExplosions();
 
     void DestroyShip( CShipEntity *, bool );
 
-    CAnimEntity * CreateExplosion( int, float, float );
+    CParticleExplosion * CreateExplosion( int, float, float );
     CShipEntity * CreatePlayerEntity();
 	CShipEntity * CreateEnemyEntity( int, float, float );
     CShipEntity * CreateRandomEnemyEntity();

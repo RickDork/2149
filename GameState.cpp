@@ -28,6 +28,7 @@ void CGameState::PostInit()
 
 	m_pGameContext->TextureFactory()->NewTexture( "player2.png" );
 	m_pGameContext->TextureFactory()->NewTexture("star.png");
+    m_pGameContext->TextureFactory()->NewTexture("pixel.png");
 	m_pGameContext->TextureFactory()->NewTexture("bullet.png");
 	m_pGameContext->TextureFactory()->NewTexture("Enemy.png");
 	m_pGameContext->TextureFactory()->NewTexture("Enemy2.png");
@@ -100,7 +101,9 @@ void CGameState::Draw()
         m_pGameContext->DrawStarBackground();
 
         m_pGameContext->EntityManager()->DrawAllEntities();
-
+    
+        m_pGameContext->DrawExplosions();
+    
    m_pGameContext->GraphicsContext()->SwapBuffers();
 
 

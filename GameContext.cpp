@@ -36,26 +36,7 @@ void CTOFNContext::InitializeGraphics()
 
      m_pGraphicsContext->GetWindowSize( &width, &height );
     
-    glGenBuffers( 1, &m_InstancedBuffer );
-    
-	glBindBuffer( GL_ARRAY_BUFFER, m_InstancedBuffer );
- 
-	for( int j = 0; j < 4; j++ )
-	{
-		glEnableVertexAttribArray( j + 2 );
-        
-		glVertexAttribPointer( j + 2, 4, GL_FLOAT, GL_FALSE, sizeof( float ) * 16, ( const GLvoid * )( sizeof( float ) * 4 * j ) );
-		
-        glVertexAttribDivisor( j + 2, 1 );
-
-	}
-
-    glGenBuffers( 1, &m_InstancedRGBABuffer );
-	glBindBuffer( GL_ARRAY_BUFFER, m_InstancedRGBABuffer );
-
-	glEnableVertexAttribArray( 6 );
-	glVertexAttribPointer( 6, 4, GL_FLOAT, GL_FALSE, 0, ( void * )0 );
-	glVertexAttribDivisor( 6, 1 );
+    m_StarEngine.Init( MAX_STARS, 1 );
 
     for( int j = 1; j >= 0; j-- )
     {
@@ -196,8 +177,15 @@ void CTOFNContext::FireBulletFrom( int type, CShipEntity * pShip, int dmg, float
 
 }
 
-CAnimEntity * CTOFNContext::CreateExplosion( int type, float x, float y )
+CParticleExplosion * CTOFNContext::CreateExplosion( int type, float x, float y )
 {
+    
+    CParticleExplosion * p = new CParticleExplosion;
+    
+    p->Init( x, y );
+    
+    m_pExplosions.push_back( p );
+    
     /*
 
     CAnimEntity * ent = new CAnimEntity;
@@ -227,7 +215,7 @@ CAnimEntity * CTOFNContext::CreateExplosion( int type, float x, float y )
     
     return ent; */
     
-    return NULL;
+    return p;
 
 }
 
@@ -236,6 +224,22 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, int dmg, f
 
     CAIEntity * ent = new CAIEntity;
     CBulletAI * aic = new CBulletAI;
+    
+    float r, g, b;
+    
+    if( type == ENTTYPE_ENBULLET ) {
+        
+        r = Util::RandomNumber( 200, 255 );
+        g = Util::RandomNumber( 100, 200 );
+        b = Util::RandomNumber( 100, 200 );
+        
+    } else {
+     
+        r = 0.0f;
+        g = 255.0f;
+        b = 0.0f;
+        
+    }
 
     aic->SetSpeed( speed );
     aic->SetDamage( dmg );
@@ -249,6 +253,8 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, int dmg, f
     ent->DisablePhysicsMovement();
     ent->SetGravity( 0 );
     ent->SetPos( x, y );
+    ent->SetScale( 2.0f, 4.0f );
+    ent->SetColor( r / 255.0f, g / 255.0f, b / 255.0f, 1.0f );
 
     aic->SetTargetEntity( ent );
     ent->SetAIController( aic );
@@ -342,8 +348,9 @@ void CTOFNContext::DestroyShip( CShipEntity * e, bool quiet )
     {
 
         const Vector2< float > & pos = e->GetPos();
-
-        CreateExplosion( 0, pos.GetX(), pos.GetY() );
+        Vector2< int > size = e->GetSize();
+        
+        CreateExplosion( 0, pos.GetX() + ( float )size.GetX() * .5f, pos.GetY() + ( float )size.GetY() * .5f );
 
     }
 
@@ -545,27 +552,15 @@ void CTOFNContext::DrawStarBackground()
 
 	m_pGraphicsContext->GetWindowSize( &width, &height );
 
-	float starMat[MAX_STARS][16];
-    float starColor[MAX_STARS][4];
     int n = 0;
-
     for( ; n < MAX_STARS; n++ )
     {
-
+        
         CStar * s = &m_pStars[n];
-
-		CMatrix< float > mat;
-		mat.Identity();
-        mat.SetTranslate( s->m_X, s->m_Y, 0.0f );
-		mat.Scale( s->m_Size, s->m_Size, 1.0f );
-
-		float * rawStarMat = mat.GetRawMatrix();
-		std::copy( rawStarMat, rawStarMat + 16, starMat[n] );
-
-        starColor[n][0] = s->m_R;
-		starColor[n][1] = s->m_G;
-		starColor[n][2] = s->m_B;
-		starColor[n][3] = s->m_A;
+        
+        m_StarEngine.SetParticleSize( n, s->m_Size, s->m_Size );
+        m_StarEngine.SetParticleColor( n, s->m_R, s->m_G, s->m_B, s->m_A );
+        m_StarEngine.SetParticlePos( n, s->m_X, s->m_Y );
 
         //We'll update in the same loop to save some cpu cycles
         s->m_Y += s->m_Speed * m_FrameDelta;
@@ -582,20 +577,57 @@ void CTOFNContext::DrawStarBackground()
 
 
     }
-
-    glBindBuffer( GL_ARRAY_BUFFER, m_InstancedBuffer );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( float ) * n * 16, starMat, GL_DYNAMIC_DRAW );
-
-    glBindBuffer( GL_ARRAY_BUFFER, m_InstancedRGBABuffer );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( float ) * n * 4, starColor, GL_DYNAMIC_DRAW );
+    
+    m_StarEngine.BindVertexBuffers();
 
     m_pDrawContext->UseShaderProgram( m_pGraphicsContext->GetShaderIDFromIndex( 1 ) );
     
-    glDrawElementsInstancedBaseVertex( GL_TRIANGLE_STRIP, 6, GL_UNSIGNED_SHORT, ( void * )0, n, 0 );
-
+    m_StarEngine.Draw();
+    
 	m_pDrawContext->UseShaderProgram( m_pGraphicsContext->GetShaderIDFromIndex( 0 ) );
     
+    
+    m_pDrawContext->Bind2DVertexBuffer();
 
+}
+
+void CTOFNContext::DrawExplosions() {
+    
+    m_pTextureFactory->GetObjectContent( "pixel.png" )->Bind();
+    
+    m_pDrawContext->UseShaderProgram( m_pGraphicsContext->GetShaderIDFromIndex( 1 ) );
+    
+    
+    boost::ptr_vector< CParticleExplosion >::iterator iter = m_pExplosions.begin();
+    for( ; iter != m_pExplosions.end(); iter++ ) {
+        
+        ( *iter ).Draw();
+    }
+    
+    m_pDrawContext->UseShaderProgram( m_pGraphicsContext->GetShaderIDFromIndex( 0 ) );
+    
+    
+    m_pDrawContext->Bind2DVertexBuffer();
+
+    
+}
+
+void CTOFNContext::UpdateExplosions() {
+ 
+    boost::ptr_vector< CParticleExplosion >::iterator iter = m_pExplosions.begin();
+    
+    for( ;iter != m_pExplosions.end(); ) {
+     
+        if( ( *iter ).KillMe() )
+            iter = m_pExplosions.erase( iter );
+        else {
+         
+            ( *iter ).Think( GetFrameDelta() );
+            iter++;
+            
+        }
+    }
+    
 }
 
 void CTOFNContext::GameLogic()
@@ -606,9 +638,11 @@ void CTOFNContext::GameLogic()
     UpdateAllEntities();
 
     DoEnemyGenerator();
-
+    
+    UpdateExplosions();
+    
     m_Lua.CallEngineFunction( "GameLogic" );
-
+    
     //In normal operations, entities should be "deleted", when this happens they aren't actually removed from the entity manager until after all update logic is finished.
     m_pEntityManager->RemoveAllDeletedEntities();
 
