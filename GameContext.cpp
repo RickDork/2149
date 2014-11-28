@@ -5,7 +5,7 @@
 #include "CoreFoundation/CoreFoundation.h"
 #endif
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 30 ), m_CurEnemyCount( 0 )
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 80 ), m_CurEnemyCount( 0 )
 {
 
 }
@@ -180,40 +180,37 @@ void CTOFNContext::FireBulletFrom( int type, CShipEntity * pShip, int dmg, float
 CParticleExplosion * CTOFNContext::CreateExplosion( int type, float x, float y )
 {
     
+    float range = -1.0f;
+    float size = 60.0f;
+    bool mega = false;
+    
+    if( Util::RandomNumber( 1, 10 ) == 2 ) {
+     
+        range = 4000.0f;
+        size = 120.0f;
+        mega = true;
+        
+    }
+    
     CParticleExplosion * p = new CParticleExplosion;
-    
-    p->Init( x, y );
-    
+    p->Init( ( mega ) ? 2 : 1, range, x, y );
     m_pExplosions.push_back( p );
     
-    /*
-
-    CAnimEntity * ent = new CAnimEntity;
+    CWorldEntity * ent = new CWorldEntity;
 
 	ent->SetContext( this );
     ent->SetClassTypeID( ENTTYPE_EXPLOSION );
-    ent->SetClassType( "XPL" );
-
-    std::string sprite = "explosion.png";
-
-    switch( type )
-    {
-    case 1:
-        //sprite = "";
-        break;
-
-    }
-
-    ent->SetMaterial( m_pTextureFactory->GetObjectContent( sprite ) );
-
-    ent->SetPos( x, y );
-    ent->SetAnimType( ANIMTYPE_KILLONEND );
-
-    ent->SetDrawDepth( 5 );
-
-    m_pEntityManager->AddEntity( ent );
     
-    return ent; */
+    if( Util::RandomNumber( 1, 10 ) < 2 )
+        ent->SetClassType( "XPL-NODMG" );
+    else
+        ent->SetClassType( "XPL" );
+
+    ent->SetPos( x - size * .5f, y - size * .5f );
+    ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), size, size );
+    
+    p->SetExplosionEntity( ent );
+    m_pEntityManager->AddEntity( ent );
     
     return p;
 
@@ -229,9 +226,9 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, int dmg, f
     
     if( type == ENTTYPE_ENBULLET ) {
         
-        r = Util::RandomNumber( 200, 255 );
-        g = Util::RandomNumber( 100, 200 );
-        b = Util::RandomNumber( 100, 200 );
+        r = 255.0f;
+        g = Util::RandomNumber( 50, 150 );
+        b = Util::RandomNumber( 50, 150 );
         
     } else {
      
@@ -253,7 +250,7 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, int dmg, f
     ent->DisablePhysicsMovement();
     ent->SetGravity( 0 );
     ent->SetPos( x, y );
-    ent->SetScale( 2.0f, 4.0f );
+    ent->SetScale( 1.25f, 1.25f );
     ent->SetColor( r / 255.0f, g / 255.0f, b / 255.0f, 1.0f );
 
     aic->SetTargetEntity( ent );
@@ -370,9 +367,11 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 	CAIEntity * bulletEnt = NULL;
 	CBulletAI * bulletAI = NULL;
 	CShipEntity * shipEnt = NULL;
+    CWorldEntity * explosionEnt = NULL;
 
 	bool playerInvolved = ( entTypeA & ( ENTTYPE_PLAYER ) );
 	bool bulletCollision = ( entTypeB & ( ENTTYPE_PLYBULLET | ENTTYPE_PLYBULLET ) );
+    bool explosionCollision = ( entTypeB & ( ENTTYPE_EXPLOSION ) );
 	bool playerBullet = ( entTypeB & ( ENTTYPE_PLYBULLET ) );
 
 	if( bulletCollision )
@@ -381,14 +380,18 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 		bulletEnt = static_cast< CAIEntity * >( pEntityB );
 		bulletAI = static_cast< CBulletAI * >( bulletEnt->GetAIController() );
 
-	} else
+    } else if( explosionCollision ) {
+      
+        explosionEnt = static_cast< CWorldEntity * >( pEntityB );
+        
+    } else
 	{
 
 		shipEnt = static_cast< CShipEntity * >( pEntityB );
 
 	}
     
-    if( !entA->IsActive() || ( bulletCollision && !bulletEnt->IsActive() ) || ( !bulletCollision && !shipEnt->IsActive() ) )
+    if( !entA->IsActive() || ( bulletCollision && !bulletEnt->IsActive() ) || ( !explosionCollision && !bulletCollision && !shipEnt->IsActive() ) || ( explosionCollision && !explosionEnt->IsActive() ) )
         return;
 
 	if( playerInvolved )
@@ -405,7 +408,11 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 
 			}
 
-		} else if( entTypeB & ENTTYPE_POWERUP )
+        } else if( explosionCollision ) {
+            
+            entA->Damage( 10 );
+            
+        } else if( entTypeB & ENTTYPE_POWERUP )
 		{
 
 
@@ -424,6 +431,12 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 
 		return;
 
+    } else if( explosionCollision ) {
+     
+        if( explosionEnt->GetClassType() == "XPL" )
+            if( entA->GetPos().GetY() > -10.0f )
+                entA->Damage( 30 );
+        
     }
 
 }
@@ -618,9 +631,10 @@ void CTOFNContext::UpdateExplosions() {
     
     for( ;iter != m_pExplosions.end(); ) {
      
-        if( ( *iter ).KillMe() )
+        if( ( *iter ).KillMe() ) {
+            m_pEntityManager->DeleteEntity( ( *iter ).GetExplosionEntity() );
             iter = m_pExplosions.erase( iter );
-        else {
+        } else {
          
             ( *iter ).Think( GetFrameDelta() );
             iter++;

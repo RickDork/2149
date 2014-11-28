@@ -64,6 +64,8 @@ void CGameState::Input()
 
     if( m_GameInput.KeyDown( SDL_SCANCODE_S ) )
         m_pPlayerEntity->Displace( 0.0f, plyMoveSpeedY * m_pGameContext->GetFrameDelta() );
+    
+    m_pPlayerEntity->FitIn( 0.0f, 0.0f, 750.0f, 550.0f );
 
     if( m_GameInput.KeyDown( SDL_SCANCODE_SPACE ) )
     {
@@ -72,7 +74,7 @@ void CGameState::Input()
 		{
 
 			m_pGameContext->FireBulletFrom( ENTTYPE_PLYBULLET, m_pPlayerEntity, 5, 600.0f );
-			m_pPlayerEntity->SetNextShotTime( SDL_GetTicks() + 300 );
+			m_pPlayerEntity->SetNextShotTime( SDL_GetTicks() + 200 );
 
 		}
 
