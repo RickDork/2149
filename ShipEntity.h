@@ -8,15 +8,16 @@ class CShipEntity : public CAIEntity
 
 protected:
 
-    int m_Health;
+    float m_Health, m_Armor;
 
     std::vector< Vector3< float > > m_GunPositions;
+    std::vector< float > m_GunDmg;
     bool m_bCountAsEnemy;
 	int m_NextShotTime;
 
 public:
 
-    CShipEntity() : CAIEntity(), m_Health( 100 ), m_bCountAsEnemy( false ), m_NextShotTime( 0 )
+    CShipEntity() : CAIEntity(), m_Health( 100.0f ), m_Armor( 100.0f ), m_bCountAsEnemy( false ), m_NextShotTime( 0 )
     {
 
     }
@@ -49,11 +50,19 @@ public:
 
 	}
 
-    void AddGun( float x, float y )
+    void AddGun( float x, float y, float dmg )
     {
 		const Vector2< int > & size = m_Sprite.GetSize();
         m_GunPositions.push_back( Vector3< float >( x * size.GetX(), y * size.GetY() ) );
+        m_GunDmg.push_back( dmg );
 
+    }
+    
+    float GetGunDamage( int j )
+    {
+        
+        return m_GunDmg[j];
+        
     }
 
     const std::vector< Vector3< float > > & GetGunPositions()
@@ -63,21 +72,38 @@ public:
 
     }
 
-    void SetHealth( int h )
+    void SetHealth( float h )
     {
 
         m_Health = h;
 
     }
-
-    void Damage( int dmg )
+    
+    void SetArmor( float a )
     {
-
-        m_Health -= dmg;
-
+        
+        m_Armor = a;
+        
     }
 
-    int GetHealth()
+    void Damage( float dmg )
+    {
+        
+        m_Armor = Util::MinF( m_Armor, -dmg, 0.0f );
+        
+        if( dmg > m_Armor )
+            m_Health -= ( dmg - m_Armor );
+
+    }
+    
+    float GetArmor()
+    {
+        
+        return m_Armor;
+        
+    }
+
+    float GetHealth()
     {
 
         return m_Health;

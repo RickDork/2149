@@ -5,7 +5,7 @@
 #include "CoreFoundation/CoreFoundation.h"
 #endif
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 80 ), m_CurEnemyCount( 0 )
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 )
 {
 
 }
@@ -24,6 +24,8 @@ void CTOFNContext::InitializeLua()
 
     m_Lua.Initialize();
     SetLuaContext( this );
+    
+    m_Lua.ReadFile( "scripts/main.lua" );
 
 }
 
@@ -106,6 +108,7 @@ void CTOFNContext::LoadEnemyData()
 				{
 
 					rapidjson::Value & v = doc[j]["gun"][i];
+                    d.m_GunDmg.push_back( v["dmg"].GetDouble() );
 					d.m_GunPos.push_back( Vector2< float >( v["x"].GetDouble(), v["y"].GetDouble() ) );
 
 				}
@@ -141,8 +144,8 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
     ent->SetPos( defaultPlayerPosX, defaultPlayerPosY );
     ent->SetDrawDepth( 1 );
 
-    ent->AddGun( .3f, .23f );
-	ent->AddGun( .7f, .23f );
+    ent->AddGun( .3f, .23f, 5.0f );
+	ent->AddGun( .7f, .23f, 5.0f );
 
     if( m_pPlayerEntity )
         m_pEntityManager->RemoveEntity( m_pPlayerEntity );
@@ -157,7 +160,7 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
 
 }
 
-void CTOFNContext::FireBulletFrom( int type, CShipEntity * pShip, int dmg, float speed )
+void CTOFNContext::FireBulletFrom( int type, CShipEntity * pShip, float speed )
 {
 
     const std::vector< Vector3< float > > & GunPos = pShip->GetGunPositions();
@@ -169,8 +172,10 @@ void CTOFNContext::FireBulletFrom( int type, CShipEntity * pShip, int dmg, float
     {
 
         float x, y;
-        GunPos[j].Get( &x, &y );
+        float dmg = pShip->GetGunDamage( j );
 
+        GunPos[j].Get( &x, &y );
+        
         FireBulletFrom( type, pX + x, pY + y, dmg, speed );
 
     }
@@ -210,19 +215,22 @@ CParticleExplosion * CTOFNContext::CreateExplosion( int type, float x, float y )
     ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), size, size );
     
     p->SetExplosionEntity( ent );
-    m_pEntityManager->AddEntity( ent );
+    m_pEntityManager->QueueEntity( ent );
     
     return p;
 
 }
 
-CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, int dmg, float speed )
+CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, float dmg, float speed )
 {
 
     CAIEntity * ent = new CAIEntity;
     CBulletAI * aic = new CBulletAI;
     
     float r, g, b;
+    float sx = 1.0f, sy = 1.0f;
+    
+    std::string sprite = "bullet.png";
     
     if( type == ENTTYPE_ENBULLET ) {
         
@@ -230,11 +238,32 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, int dmg, f
         g = Util::RandomNumber( 50, 150 );
         b = Util::RandomNumber( 50, 150 );
         
+        Vector2< float > p = m_pPlayerEntity->GetPos();
+        
+        float ang = 270.0f;
+        
+        if( Util::RandomNumber( 1, 10 ) < 8 )
+            ang = -Util::AngleBetweenPoints( x, y, p.GetX() + 45, p.GetY() + 45 );
+        
+        if( ang < 0.0f )
+            ang += 360.0f;
+        
+        ang = Util::MinF( ang, 0.0f, 200.0f );
+        ang = Util::MaxF( ang, 0.0f, 340.0f );
+        
+        aic->SetAngle( ang );
+        
+        sprite = "ball.png";
+        sx = .5f;
+        sy = .5f;
+        
     } else {
      
         r = 0.0f;
         g = 255.0f;
         b = 0.0f;
+        
+        aic->SetAngle( 90.0f );
         
     }
 
@@ -246,11 +275,11 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, int dmg, f
     ent->SetClassTypeID( type );
     ent->SetClassType( "BLT" );
 	ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 5, 5 );
-    ent->SetMaterial( m_pTextureFactory->GetObjectContent( "bullet.png" ) );
+    ent->SetMaterial( m_pTextureFactory->GetObjectContent( sprite ) );
     ent->DisablePhysicsMovement();
     ent->SetGravity( 0 );
     ent->SetPos( x, y );
-    ent->SetScale( 1.25f, 1.25f );
+    ent->SetScale( sx, sy );
     ent->SetColor( r / 255.0f, g / 255.0f, b / 255.0f, 1.0f );
 
     aic->SetTargetEntity( ent );
@@ -297,6 +326,7 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y )
     ent->DisablePhysicsMovement();
     ent->SetGravity( 0 );
 	ent->SetHealth( d.m_Health );
+    ent->SetArmor( 0.0f );
     ent->SetPos( x, y );
     ent->SetDrawDepth( 1 );
 
@@ -308,7 +338,7 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y )
 	for( int j = 0; j < v.size(); j++ )
 	{
 
-		ent->AddGun( v[j].GetX(), v[j].GetY() );
+		ent->AddGun( v[j].GetX(), v[j].GetY(), d.m_GunDmg[j] );
 
 	}
 
@@ -370,7 +400,7 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
     CWorldEntity * explosionEnt = NULL;
 
 	bool playerInvolved = ( entTypeA & ( ENTTYPE_PLAYER ) );
-	bool bulletCollision = ( entTypeB & ( ENTTYPE_PLYBULLET | ENTTYPE_PLYBULLET ) );
+	bool bulletCollision = ( entTypeB & ( ENTTYPE_PLYBULLET | ENTTYPE_ENBULLET ) );
     bool explosionCollision = ( entTypeB & ( ENTTYPE_EXPLOSION ) );
 	bool playerBullet = ( entTypeB & ( ENTTYPE_PLYBULLET ) );
 
@@ -421,16 +451,21 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 		} else
 		{
 
+            shipEnt->Damage( 30 );
 		}
 
 	} else if( bulletCollision )
     {
+        
+        if( playerBullet ) {
 
-        entA->Damage( bulletAI->GetDamage() );
-        m_pEntityManager->DeleteEntity( bulletEnt );
+            entA->Damage( bulletAI->GetDamage() );
+            m_pEntityManager->DeleteEntity( bulletEnt );
 
-		return;
+            return;
 
+        }
+        
     } else if( explosionCollision ) {
      
         if( explosionEnt->GetClassType() == "XPL" )
@@ -659,5 +694,7 @@ void CTOFNContext::GameLogic()
     
     //In normal operations, entities should be "deleted", when this happens they aren't actually removed from the entity manager until after all update logic is finished.
     m_pEntityManager->RemoveAllDeletedEntities();
+    
+    m_pEntityManager->AddAllQueuedEntities();
 
 }

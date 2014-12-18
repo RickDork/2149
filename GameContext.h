@@ -54,6 +54,12 @@ public:
     void InitializeGraphics();
     void InitializeData();
 
+    void SetMaxEnemyCount( int n ) {
+     
+        m_MaxEnemyCount = n;
+        
+    }
+    
     CShipEntity * GetPlayerEntity()
     {
 
@@ -74,8 +80,9 @@ public:
     CShipEntity * CreatePlayerEntity();
 	CShipEntity * CreateEnemyEntity( int, float, float );
     CShipEntity * CreateRandomEnemyEntity();
-    CAIEntity * FireBulletFrom( int, float, float, int, float );
-    void FireBulletFrom( int, CShipEntity * , int, float );
+   
+    CAIEntity * FireBulletFrom( int, float, float, float, float );
+    void FireBulletFrom( int, CShipEntity * , float );
 
     void HandleEntityContact( void *, int, void *, int );
 

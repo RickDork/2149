@@ -11,10 +11,13 @@ class CGameState : public CState< CTOFNContext >
 {
 
 private:
+    
+    CTextureImage * m_PixelMat;
 
     CGameInput m_GameInput;
-
     CShipEntity * m_pPlayerEntity;
+
+    CFrameBufferObject m_fboBullets, m_fboBullets2;
 
 public:
 

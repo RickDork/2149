@@ -14,8 +14,9 @@ enum
 class CBulletAI : public CAIController
 {
 
-    int m_Direction, m_Damage;
-    float m_VelMul, m_BulletSpeed;
+    int m_Direction;
+    float m_Angle;
+    float m_Damage, m_VelMul, m_BulletSpeed;
 
  public:
 
@@ -39,14 +40,14 @@ class CBulletAI : public CAIController
 
     }
 
-	int GetDamage()
+	float GetDamage()
 	{
 
 		return m_Damage;
 
 	}
 
-    void SetDamage( int d )
+    void SetDamage( float d )
     {
 
         m_Damage = d;
@@ -59,8 +60,14 @@ class CBulletAI : public CAIController
         m_BulletSpeed = s;
 
     }
+    
+    void SetAngle( float a ) {
+     
+        m_Angle = a;
+        
+    }
 
-    CBulletAI() : CAIController(), m_VelMul( 1.0f ), m_Direction( DIR_DOWN ), m_BulletSpeed( 900.0f ), m_Damage( 0 )
+    CBulletAI() : CAIController(), m_VelMul( 1.0f ), m_Direction( DIR_DOWN ), m_BulletSpeed( 900.0f ), m_Damage( 0.0f ), m_Angle( 0.0f )
     {
 
     }

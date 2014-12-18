@@ -10,8 +10,6 @@
 #define MAX_PARTICLES_PER_ARC 100
 #define MAX_EXPLOSION_LAYERS 10
 
-#define DEG2RAD 0.017453f
-
 class CExplosionSegment {
     
 private:

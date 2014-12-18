@@ -17,6 +17,7 @@ public:
 	int m_CollisionBoxWidth, m_CollisionBoxHeight;
 	std::string m_Sprite;
 
+    std::vector< float > m_GunDmg;
 	std::vector< Vector2< float > > m_GunPos;
 
 };

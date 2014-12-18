@@ -14,7 +14,7 @@ void CEnemyAI::Think()
         if( s->CanShoot() ) {
             
             s->SetNextShotTime( SDL_GetTicks() + Util::RandomNumber( 500, 1500 ) );
-            p->FireBulletFrom( ENTTYPE_ENBULLET, s, 0.0f, Util::RandomNumber( 350, 600 ) );
+            p->FireBulletFrom( ENTTYPE_ENBULLET, s, Util::RandomNumber( 350, 400 ) );
     
         }
         
