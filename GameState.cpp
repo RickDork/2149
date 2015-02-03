@@ -38,6 +38,10 @@ void CGameState::PostInit()
 	m_pGameContext->TextureFactory()->NewTexture("Enemy2.png");
 	m_pGameContext->TextureFactory()->NewTexture("Enemy3.png");
 	m_pGameContext->TextureFactory()->NewTexture("Enemy4.png");
+    
+    m_pGameContext->FontFactory()->NewFont( "font.ttf" );
+    
+    texture = m_pGameContext->FontFactory()->GetObjectContent( "font.ttf" )->GetFontSheet().GetTexture();
 
     m_PixelMat = m_pGameContext->TextureFactory()->GetObjectContent( "pixel.png" );
     
@@ -145,6 +149,8 @@ void CGameState::Draw()
             m_fboBullets2.DrawTexture( m_pGameContext->DrawContext(), &mat );
         m_fboBullets.EndDrawingToFBO();
     
+    m_pGameContext->DrawContext()->DrawGLTexture( texture, 0.0f, 10.0f, 20000.0f, 128.0f, 1.0f, 1.0f, 1.0f, 1.0f );
+    
         m_pGameContext->DrawExplosions();
     
         float armor_mul = ( m_pPlayerEntity->GetArmor() > 0.0f )? m_pPlayerEntity->GetArmor() / 100.0f : 0.0f;
@@ -155,6 +161,7 @@ void CGameState::Draw()
         
         m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, 10.0f, 560.0f, 150.0f, 10.0f, 1.0f, 1.0f, 1.0f, 0.5f );
         m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, 11.0f, 561.0f, 148.0f * health_mul, 8.0f, 0.2f, 0.8f, 0.2f, 0.5f );
+
 
    m_pGameContext->GraphicsContext()->SwapBuffers();
 

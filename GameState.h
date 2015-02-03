@@ -18,6 +18,8 @@ private:
     CShipEntity * m_pPlayerEntity;
 
     CFrameBufferObject m_fboBullets, m_fboBullets2;
+    
+    GLuint texture;
 
 public:
 

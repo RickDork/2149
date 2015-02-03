@@ -26,11 +26,18 @@ CGame::CGame()
     m_DrawContext.Bind2DVertexBuffer();
 
     Log::Debug( "Draw Context initialized" );
-
+    
+    m_FTContext.Init();
+    m_FontFactory.SetFontLibrary( m_FTContext.GetLibrary() );
+    
+    Log::Debug( "Font Context initialized" );
+    
     m_GameContext.SetGraphicsContext( &m_GraphicsContext );
     m_GameContext.SetDrawContext( &m_DrawContext );
     m_GameContext.SetEntityManager( &m_EntityManager );
     m_GameContext.SetTextureFactory( &m_TextureFactory );
+    m_GameContext.SetFTContext( &m_FTContext );
+    m_GameContext.SetFontFactory( &m_FontFactory );
 
     Log::Debug( "Game Context initialized" );
 
