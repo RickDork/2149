@@ -69,9 +69,7 @@ bool CExplosionSegment::Think( CInstancedParticleEngine & particleEngine, int pa
             
             float newx = x + vx * dps;
             float newy = y + vy * dps;
-            
-            float mvx, mvy;
-            
+    
             hasActiveParticles = true;
             
             m_Pos[j].Set( newx, newy + 300.0f * dps );

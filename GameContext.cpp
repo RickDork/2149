@@ -243,7 +243,7 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, float dmg,
         float ang = 270.0f;
         
         if( Util::RandomNumber( 1, 10 ) < 8 )
-            ang = -Util::AngleBetweenPoints( x, y, p.GetX() + 45, p.GetY() + 45 );
+            ang = -Util::AngleBetweenPoints( x, y, p.GetX() + 45 + Util::RandomNumber( -50, 50 ), p.GetY() + 45 + Util::RandomNumber( -50, 50 ) );
         
         if( ang < 0.0f )
             ang += 360.0f;

@@ -5,6 +5,8 @@
 #include "GameState.h"
 #include "GameContext.h"
 #include "EntityManager.h"
+#include "Define.h"
+
 
 class CGame
 {

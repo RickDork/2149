@@ -17,8 +17,8 @@ void CGameState::Init()
     m_pGameContext->InitializeGraphics();
     m_pGameContext->InitializeData();
     
-    m_fboBullets.Init( 800, 600 );
-    m_fboBullets2.Init( 800, 600 );
+    m_fboBullets.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
+    m_fboBullets2.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
 
     m_bInit = true;
 
@@ -39,9 +39,9 @@ void CGameState::PostInit()
 	m_pGameContext->TextureFactory()->NewTexture("Enemy3.png");
 	m_pGameContext->TextureFactory()->NewTexture("Enemy4.png");
     
-    m_pGameContext->FontFactory()->NewFont( "font.ttf" );
+    m_pGameContext->FontFactory()->NewFont( "font.ttf", 32 );
     
-    texture = m_pGameContext->FontFactory()->GetObjectContent( "font.ttf" )->GetFontSheet().GetTexture();
+    texture = m_pGameContext->FontFactory()->GetFont( "font.ttf", 32 )->GetFontSheet().GetTexture();
 
     m_PixelMat = m_pGameContext->TextureFactory()->GetObjectContent( "pixel.png" );
     
@@ -75,7 +75,7 @@ void CGameState::Input()
     if( m_GameInput.KeyDown( SDL_SCANCODE_S ) )
         m_pPlayerEntity->Displace( 0.0f, plyMoveSpeedY * m_pGameContext->GetFrameDelta() );
     
-    m_pPlayerEntity->FitIn( 0.0f, 0.0f, 750.0f, 550.0f );
+    m_pPlayerEntity->FitIn( 0.0f, 0.0f, SCREEN_WIDTH - 50.0f, SCREEN_HEIGHT - 50.0f );
 /*
     if( m_GameInput.KeyDown( SDL_SCANCODE_SPACE ) )
     {
@@ -129,7 +129,7 @@ void CGameState::Draw()
 
         CMatrix< float > mat;
         mat.Identity();
-        mat.Translate( 0.0f, 600.0f , 0.0f);
+        mat.Translate( 0.0f, SCREEN_HEIGHT, 0.0f);
 
         m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
         m_fboBullets2.DrawTexture( m_pGameContext->DrawContext(), &mat );
@@ -148,21 +148,23 @@ void CGameState::Draw()
             m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
             m_fboBullets2.DrawTexture( m_pGameContext->DrawContext(), &mat );
         m_fboBullets.EndDrawingToFBO();
+
+  //  m_pGameContext->FontFactory()->GetFont( "font.ttf", 32 )->DrawString( m_pGameContext->DrawContext(), "Test\nTest", 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f );
     
-    m_pGameContext->DrawContext()->DrawGLTexture( texture, 0.0f, 10.0f, 20000.0f, 128.0f, 1.0f, 1.0f, 1.0f, 1.0f );
+   // m_pGameContext->DrawContext()->DrawGLTexture( texture, 0.0f, 10.0f, 20000.0f, 128.0f, 1.0f, 1.0f, 1.0f, 1.0f );
     
         m_pGameContext->DrawExplosions();
     
         float armor_mul = ( m_pPlayerEntity->GetArmor() > 0.0f )? m_pPlayerEntity->GetArmor() / 100.0f : 0.0f;
         float health_mul = ( m_pPlayerEntity->GetHealth() > 0.0f )? m_pPlayerEntity->GetHealth() / 100.0f : 0.0f;
-
+/*
         m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, 10.0f, 545.0f, 150.0f, 10.0f, 1.0f, 1.0f, 1.0f, 0.5f );
         m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, 11.0f, 546.0f, 148.0f * armor_mul, 8.0f, 0.3f, 0.3f, 1.0f, 1.0f );
         
         m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, 10.0f, 560.0f, 150.0f, 10.0f, 1.0f, 1.0f, 1.0f, 0.5f );
         m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, 11.0f, 561.0f, 148.0f * health_mul, 8.0f, 0.2f, 0.8f, 0.2f, 0.5f );
 
-
+*/
    m_pGameContext->GraphicsContext()->SwapBuffers();
 
 

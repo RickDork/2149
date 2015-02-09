@@ -9,7 +9,10 @@ void CEnemyAI::Think()
     if( m_pTargetEntity )
     {
 
-        m_pTargetEntity->Displace2( 0.0f, m_Speed );
+        m_pTargetEntity->Displace2( sin( m_FlyingAngle ) * m_Speed, m_Speed );
+        
+        //if( m_bCrazyFlying )
+        //    m_FlyingAngle += p->GetFrameDelta() * m_FlyingDirection;
         
         if( s->CanShoot() ) {
             

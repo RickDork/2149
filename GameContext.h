@@ -13,6 +13,7 @@
 #include "Star.h"
 #include "EnemyData.h"
 #include "ParticleExplosion.h"
+#include "Define.h"
 
 #define MAX_STARS 1500
 

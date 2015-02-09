@@ -6,6 +6,7 @@
 #include "GameContext.h"
 #include "ShipEntity.h"
 #include "Entity.h"
+#include "Define.h"
 
 class CGameState : public CState< CTOFNContext >
 {
