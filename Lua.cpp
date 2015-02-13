@@ -31,6 +31,32 @@ LuaCallBackFunction( SetMaxEnemyCount )
     
 }
 
+LuaCallBackFunction( AddToGenQueue )
+{
+    
+    int i = 0;
+    float p = 0.0f;
+    
+    if( LArgCount() >= 2 ) {
+     
+        i = LNumber( 1 );
+        p = LNumber( 2 );
+        
+    }
+    
+    gLuaContext->AddEnemyToGenQueue( i, p );
+    return 0;
+    
+}
+
+LuaCallBackFunction( ClearGenQueue )
+{
+    
+    gLuaContext->ClearGenQueue();
+    return 0;
+    
+}
+
 LuaCallBackFunction( GenerateEnemy )
 {
 
@@ -54,5 +80,7 @@ void CTOFNLua::CreateLuaHooks()
     LuaNameSpace( m_pLuaState, "Game" );
         LuaNameSpaceFunction( m_pLuaState, "Game", GenerateEnemy );
         LuaNameSpaceFunction( m_pLuaState, "Game", SetMaxEnemyCount );
+        LuaNameSpaceFunction( m_pLuaState, "Game", AddToGenQueue );
+        LuaNameSpaceFunction( m_pLuaState, "Game", ClearGenQueue );
     
 }

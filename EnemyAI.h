@@ -10,7 +10,7 @@ class CEnemyAI : public CTemplateAIController< CLuaContext >
 {
 
 	float m_Speed;
-    float m_FlyingAngle, m_FlyingDirection;
+    float m_FlyingAngle, m_FlyingAngleSpeed;
     bool m_bCrazyFlying;
     
 public:
@@ -24,20 +24,32 @@ public:
 		m_Speed = spd;
 
 	}
-
-	CEnemyAI() : m_Speed( 100.0f ), m_FlyingAngle( 0.0f )
-	{
-        
-        m_bCrazyFlying = false;
     
-        if( Util::RandomNumber( 0, 5 ) == 1 ) {
-            
-            m_bCrazyFlying = true;
-            m_FlyingDirection = Util::RandomNumber( -2, 2 );
-            
-        }
+    void SetCrazyFlying( bool b ) {
+     
+        m_bCrazyFlying = b;
         
     }
+    
+    void SetFlyingAngle( float f ) {
+     
+        m_FlyingAngle = f;
+        
+    }
+    
+    void SetFlyingAngleSpeed( float f ) {
+     
+        m_FlyingAngleSpeed = f;
+        
+    }
+
+	CEnemyAI() : CTemplateAIController(), m_Speed( 100.0f ), m_FlyingAngle( 0.0f ), m_bCrazyFlying( false ), m_FlyingAngleSpeed( 0.0f )
+	{
+    
+        
+    }
+    
+    virtual ~CEnemyAI() { }
 
 };
 

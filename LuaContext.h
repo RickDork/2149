@@ -16,7 +16,9 @@ public:
     virtual CShipEntity * CreateRandomEnemyEntity() = 0;
     virtual CAIEntity * FireBulletFrom( int type, float x, float y, float dmg, float speed ) = 0;
     virtual void FireBulletFrom( int type, CShipEntity * pShip, float speed ) = 0;
-
+    virtual void AddEnemyToGenQueue( int, float ) = 0;
+    virtual void ClearGenQueue() = 0;
+    
 	CLuaContext() : CGameContext() { }
 	virtual ~CLuaContext() { }
 

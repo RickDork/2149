@@ -14,8 +14,27 @@
 #include "EnemyData.h"
 #include "ParticleExplosion.h"
 #include "Define.h"
+#include "OrbEntity.h"
+#include "OrbAI.h"
 
 #define MAX_STARS 1500
+
+class CEnemyGenQueue {
+  
+public:
+    
+    int m_Type;
+    float m_Probability;
+    
+    CEnemyGenQueue() : m_Type( 0 ), m_Probability( 1.0f ) {
+        
+    }
+    
+    CEnemyGenQueue( int i, float p ) : m_Type( i ), m_Probability( p ) {
+        
+    }
+    
+};
 
 class CTOFNContext : public CLuaContext
 {
@@ -25,6 +44,8 @@ private:
     CShipEntity * m_pPlayerEntity;
     int m_MaxEnemyCount;
     int m_CurEnemyCount;
+    int m_NextEnemySpawn;
+    int m_PlayerEXP;
 
     boost::ptr_vector< CStar > m_pStars;
     boost::ptr_vector< CParticleExplosion > m_pExplosions;
@@ -38,6 +59,7 @@ private:
     CCollisionCallback m_CollisionCallback;
 
 	std::vector< CEnemyData > m_EnemyData;
+    std::vector< CEnemyGenQueue > m_EnemyGenQueue;
     
     bool bIter;
     std::vector< CEntity * > bulletvec;
@@ -61,6 +83,18 @@ public:
         
     }
     
+    int GetPlayerEXP() {
+     
+        return m_PlayerEXP;
+        
+    }
+    
+    void SetPlayerEXP( int exp ) {
+     
+        m_PlayerEXP = exp;
+        
+    }
+    
     CShipEntity * GetPlayerEntity()
     {
 
@@ -76,10 +110,16 @@ public:
     void DrawExplosions();
 
     void DestroyShip( CShipEntity *, bool );
+    
+    void AddEnemyToGenQueue( int, float );
+    void ClearGenQueue();
 
+    COrbEntity * CreateOrb( int, float, float );
+    void CreateOrbs( int, int, float, float );
     CParticleExplosion * CreateExplosion( int, float, float );
     CShipEntity * CreatePlayerEntity();
-	CShipEntity * CreateEnemyEntity( int, float, float );
+	CShipEntity * CreateEnemyEntity( int, float, float, float );
+    int CreateRandomEnemyFormation( bool );
     CShipEntity * CreateRandomEnemyEntity();
    
     CAIEntity * FireBulletFrom( int, float, float, float, float );

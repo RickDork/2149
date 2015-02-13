@@ -5,7 +5,7 @@
 #include "CoreFoundation/CoreFoundation.h"
 #endif
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 )
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 )
 {
 
 }
@@ -143,6 +143,8 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
     ent->SetGravity( 0 );
     ent->SetPos( defaultPlayerPosX, defaultPlayerPosY );
     ent->SetDrawDepth( 1 );
+    ent->SetHealth( 200.0f );
+    ent->SetArmor( 0.0f );
 
     ent->AddGun( .3f, .23f, 5.0f );
 	ent->AddGun( .7f, .23f, 5.0f );
@@ -300,16 +302,128 @@ CShipEntity * CTOFNContext::CreateRandomEnemyEntity()
 	int width, height;
 
 	m_pGraphicsContext->GetWindowSize( &width, &height );
-
+    
 	int type = Util::RandomNumber( 0, m_EnemyData.size() - 1 );
+    
+    CEnemyData & d = m_EnemyData[type];
+    
 	float x = Util::RandomNumber( 10, width - 100 );
 	float y = Util::RandomNumber( -500, -100 );
-
-	return CreateEnemyEntity( type, x, y );
+    float speed =  Util::RandomNumber( d.m_SpeedMin, d.m_SpeedMax );
+        
+	return CreateEnemyEntity( type, x, y, speed );
 
 }
 
-CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y )
+int CTOFNContext::CreateRandomEnemyFormation( bool countasenemy ) {
+    
+    int formationtype = Util::RandomNumber( 0, 3 );
+    int enemytype = Util::RandomNumber( 0, m_EnemyData.size() - 1 );
+    Vector2< float > offset;
+    int spritewidth = 0, spriteheight = 0;
+    int formationwidth = 0, formationheight = 0;
+    
+    std::vector< Vector2< float > > formationpos;
+    std::vector< Vector2< float > > enemypos;
+    
+    CEnemyData & d = m_EnemyData[enemytype];
+    
+    float speed =  Util::RandomNumber( d.m_SpeedMin, d.m_SpeedMax );
+    
+    spritewidth = d.m_Width;
+    spriteheight = d.m_Height;
+    
+    switch( formationtype ) {
+     
+        case 0:
+            formationpos.push_back( Vector2< float >( 0.0f, 0.0f ) );
+            formationpos.push_back( Vector2< float >( 1.0f, 1.0f ) );
+            formationpos.push_back( Vector2< float >( 2.0f, 2.0f ) );
+            formationpos.push_back( Vector2< float >( 3.0f, 1.0f ) );
+            formationpos.push_back( Vector2< float >( 4.0f, 0.0f ) );
+            break;
+            
+        case 1:
+            formationpos.push_back( Vector2< float >( 1.0f, 1.0f ) );
+            formationpos.push_back( Vector2< float >( 2.0f, 0.0f ) );
+            formationpos.push_back( Vector2< float >( 3.0f, 1.0f ) );
+            formationpos.push_back( Vector2< float >( 2.0f, 1.0f ) );
+            formationpos.push_back( Vector2< float >( 2.0f, 2.0f ) );
+            break;
+            
+        case 2:
+            formationpos.push_back( Vector2< float >( 0.0f, 0.0f ) );
+            formationpos.push_back( Vector2< float >( 1.5f, 0.0f ) );
+            formationpos.push_back( Vector2< float >( 0.0f, 1.5f ) );
+            formationpos.push_back( Vector2< float >( 1.5f, 1.5f ) );
+            formationpos.push_back( Vector2< float >( .75f, 3.0f ) );
+            break;
+            
+        case 3:
+            formationpos.push_back( Vector2< float >( 0.0f, 0.0f ) );
+            formationpos.push_back( Vector2< float >( 0.0f, 1.5f ) );
+            formationpos.push_back( Vector2< float >( 0.0f, 3.0f ) );
+            formationpos.push_back( Vector2< float >( 0.0f, 4.5f ) );
+            formationpos.push_back( Vector2< float >( 0.0f, 6.0f ) );
+            break;
+            
+    }
+
+    for( int i = 0; i < formationpos.size(); i++ ) {
+        
+        float x = formationpos[i].GetX() * ( float )spritewidth;
+        float y = formationpos[i].GetY() * ( float )spriteheight;
+        
+        enemypos.push_back( Vector2< float >( x, y ) );
+        
+        float x1 = x + spritewidth;
+        float y1 = y + spriteheight;
+        
+        if( x1 > formationwidth )
+            formationwidth = x1;
+        
+        if( y1 > formationheight )
+            formationheight = y1;
+        
+    }
+    
+    float halfwidth = formationwidth * .5f;
+    
+    offset.Set( Util::RandomNumber( -halfwidth, SCREEN_WIDTH - halfwidth ),
+                Util::RandomNumber( -formationheight * 2.5f, -formationheight * 3.0f ) );
+    
+    float flyingangle = 270.0f;
+    float anglespeed = Util::RandomNumber( 175, 275 );
+    
+    for( int i = 0; i < enemypos.size(); i++ ) {
+     
+        CShipEntity * e = CreateEnemyEntity( enemytype, enemypos[i].GetX() + offset.GetX(), enemypos[i].GetY() + offset.GetY(), speed );
+        e->SetCountAsEnemy( countasenemy );
+        
+        if( formationtype == 3 ) {
+         
+            CEnemyAI * ai = static_cast< CEnemyAI* >( e->GetAIController() );
+            ai->SetFlyingAngle( flyingangle );
+            ai->SetFlyingAngleSpeed( anglespeed );
+            ai->SetCrazyFlying( true );
+            
+            float radius = ( 90.0f / anglespeed ) * Util::MinMaxF( speed, -300.0f, 300.0f );
+            float flyoffset = cos( flyingangle * DEG2RAD ) * -radius;
+            
+            e->SetPos( e->GetX() + flyoffset, e->GetY() );
+            
+            flyingangle += 60.0f;
+            
+            
+        }
+        
+    }
+    
+    return enemypos.size();
+    
+}
+
+CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float speed )
 {
 
     CShipEntity * ent = new CShipEntity;
@@ -317,6 +431,13 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y )
 
 	CEnemyData & d = m_EnemyData[type];
 
+    //What a hack
+    if( ( int )speed == 0 ) {
+     
+        speed =  Util::RandomNumber( d.m_SpeedMin, d.m_SpeedMax );
+        
+    }
+    
 	ent->SetContext( this );
     ent->SetClassTypeID( ENTTYPE_ENEMY );
     ent->SetClassType( "EN" );
@@ -331,7 +452,7 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y )
     ent->SetDrawDepth( 1 );
 
     aic->SetEntityContext( this );
-	aic->SetSpeed( Util::RandomNumber( d.m_SpeedMin, d.m_SpeedMax ) );
+    aic->SetSpeed( speed );
 
 	std::vector< Vector2< float > > & v = d.m_GunPos;
 
@@ -354,18 +475,70 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y )
 
 void CTOFNContext::DoEnemyGenerator()
 {
+    
+    if( SDL_GetTicks() < m_NextEnemySpawn )
+        return;
 
     int n = ( m_MaxEnemyCount - m_CurEnemyCount );
     for( int j = 0; j < n; j++ )
     {
 
-        CShipEntity * e = CreateRandomEnemyEntity();
-        e->SetCountAsEnemy( true );
+        bool createformation = false;
+
+        
+        if( m_CurEnemyCount < m_MaxEnemyCount - 3 )
+            if( Util::RandomNumber( 1, 10 ) <= 3 )
+                createformation = true;
+        
+        
+        if( !createformation ) {
+            
+            CShipEntity * e = CreateRandomEnemyEntity();
+            e->SetCountAsEnemy( true );
+            
+        } else
+            j += CreateRandomEnemyFormation( true );
 
     }
 
     m_CurEnemyCount = m_MaxEnemyCount;
 
+}
+
+COrbEntity * CTOFNContext::CreateOrb( int type, float x, float y ) {
+ 
+    COrbEntity * ent = new COrbEntity;
+    COrbAI * aic = new COrbAI;
+    
+    ent->SetContext( this );
+    aic->SetEntityContext( this );
+    CTextureImage * m = m_pTextureFactory->GetObjectContent( "orb.png" );
+    ent->SetClassTypeID( ENTTYPE_ORB );
+    ent->SetDrawDepth( 2 );
+    ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 20.0f, 20.0f );
+    ent->SetMaterial( m);
+    ent->SetSize( 15, 15 );
+    ent->DisablePhysicsMovement();
+    ent->SetGravity( 0 );
+    ent->SetPos( x, y );
+    
+    aic->SetTargetEntity( ent );
+    ent->SetAIController( aic );
+    
+    m_pEntityManager->QueueEntity( ent );
+    
+    return ent;
+    
+}
+
+void CTOFNContext::CreateOrbs( int type, int count, float x, float y ) {
+ 
+    for( int i = 0; i < count; i++ ) {
+        
+        COrbEntity * ent = CreateOrb( type, x, y );
+        
+    }
+    
 }
 
 void CTOFNContext::DestroyShip( CShipEntity * e, bool quiet )
@@ -383,6 +556,9 @@ void CTOFNContext::DestroyShip( CShipEntity * e, bool quiet )
 
     m_pEntityManager->DeleteEntity( e );
 
+    if( SDL_GetTicks() > m_NextEnemySpawn && Util::RandomNumber( 1, 5 ) < 3 )
+        m_NextEnemySpawn = SDL_GetTicks() + Util::RandomNumber( 500, 1000 );
+    
     if( e->CountAsEnemy() )
         m_CurEnemyCount--;
 
@@ -398,12 +574,14 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 	CBulletAI * bulletAI = NULL;
 	CShipEntity * shipEnt = NULL;
     CWorldEntity * explosionEnt = NULL;
+    COrbEntity * orbEnt = NULL;
 
 	bool playerInvolved = ( entTypeA & ( ENTTYPE_PLAYER ) );
 	bool bulletCollision = ( entTypeB & ( ENTTYPE_PLYBULLET | ENTTYPE_ENBULLET ) );
     bool explosionCollision = ( entTypeB & ( ENTTYPE_EXPLOSION ) );
 	bool playerBullet = ( entTypeB & ( ENTTYPE_PLYBULLET ) );
-
+    bool orbCollision = ( entTypeB & ( ENTTYPE_ORB ) );
+    
 	if( bulletCollision )
 	{
 
@@ -414,6 +592,10 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
       
         explosionEnt = static_cast< CWorldEntity * >( pEntityB );
         
+    } else if( orbCollision ) {
+    
+        orbEnt = static_cast< COrbEntity * >( pEntityB );
+        
     } else
 	{
 
@@ -421,7 +603,7 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 
 	}
     
-    if( !entA->IsActive() || ( bulletCollision && !bulletEnt->IsActive() ) || ( !explosionCollision && !bulletCollision && !shipEnt->IsActive() ) || ( explosionCollision && !explosionEnt->IsActive() ) )
+    if( !entA->IsActive() || ( bulletCollision && !bulletEnt->IsActive() ) || ( !orbCollision && !explosionCollision && !bulletCollision && !shipEnt->IsActive() ) || ( explosionCollision && !explosionEnt->IsActive() ) || ( orbCollision && !orbEnt->IsActive() ) )
         return;
 
 	if( playerInvolved )
@@ -433,8 +615,9 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 			if( !playerBullet )
 			{
 
-				entA->Damage( bulletAI->GetDamage() );
-				m_pEntityManager->DeleteEntity( bulletEnt );
+                entA->Damage( bulletAI->GetDamage() );
+                m_pEntityManager->DeleteEntity( bulletEnt );
+
 
 			}
 
@@ -448,7 +631,12 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 
 
 
-		} else
+        } else if( orbCollision ) {
+            
+            entA->Heal( 2.0f );
+            m_pEntityManager->DeleteEntity( orbEnt );
+            
+        } else
 		{
 
             shipEnt->Damage( 30 );
@@ -458,11 +646,18 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
     {
         
         if( playerBullet ) {
+            
+            float y = entA->GetY();
+            int height = entA->GetSize().GetY();
+            
+            if( y > -height - 20 ) {
 
-            entA->Damage( bulletAI->GetDamage() );
-            m_pEntityManager->DeleteEntity( bulletEnt );
+                entA->Damage( bulletAI->GetDamage() );
+                m_pEntityManager->DeleteEntity( bulletEnt );
 
-            return;
+                return;
+            
+            }
 
         }
         
@@ -530,6 +725,18 @@ void CTOFNContext::RandomizeStar( CStar * s )
 
 }
 
+void CTOFNContext::AddEnemyToGenQueue( int i, float p ) {
+ 
+    m_EnemyGenQueue.push_back( CEnemyGenQueue( i, p ) );
+    
+}
+
+void CTOFNContext::ClearGenQueue() {
+ 
+    m_EnemyGenQueue.clear();
+    
+}
+
 void CTOFNContext::UpdateAllEntities()
 {
 
@@ -554,6 +761,7 @@ void CTOFNContext::UpdateAllEntities()
                 if( pShip->GetHealth() <= 0 )
                 {
 
+                    CreateOrbs( 0, Util::RandomNumber( 3, 6 ), pShip->GetX(), pShip->GetY() );
                     DestroyShip( pShip, false );
 
                 }

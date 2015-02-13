@@ -17,10 +17,8 @@ private:
 
     CGameInput m_GameInput;
     CShipEntity * m_pPlayerEntity;
-
+    CFontMaterial * m_pHUDFont;
     CFrameBufferObject m_fboBullets, m_fboBullets2;
-    
-    GLuint texture;
 
 public:
 

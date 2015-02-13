@@ -8,7 +8,7 @@ class CShipEntity : public CAIEntity
 
 protected:
 
-    float m_Health, m_Armor;
+    float m_MaxHealth, m_Health, m_Armor;
 
     std::vector< Vector3< float > > m_GunPositions;
     std::vector< float > m_GunDmg;
@@ -17,11 +17,13 @@ protected:
 
 public:
 
-    CShipEntity() : CAIEntity(), m_Health( 100.0f ), m_Armor( 100.0f ), m_bCountAsEnemy( false ), m_NextShotTime( 0 )
+    CShipEntity() : CAIEntity(), m_Health( 100.0f ), m_MaxHealth( 100.0f ), m_Armor( 100.0f ), m_bCountAsEnemy( false ), m_NextShotTime( 0 )
     {
 
     }
-
+    
+    virtual ~CShipEntity() { }
+    
 	bool CanShoot()
 	{
 
@@ -83,6 +85,15 @@ public:
     {
         
         m_Armor = a;
+        
+    }
+    
+    void Heal( float h ) {
+     
+        m_Health += h;
+        
+        if( m_Health > m_MaxHealth )
+            m_Health = m_MaxHealth;
         
     }
 

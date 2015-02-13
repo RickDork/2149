@@ -1,4 +1,5 @@
 #include "GameState.h"
+#include <sstream>
 
 CGameState::CGameState() : CState()
 {
@@ -38,11 +39,11 @@ void CGameState::PostInit()
 	m_pGameContext->TextureFactory()->NewTexture("Enemy2.png");
 	m_pGameContext->TextureFactory()->NewTexture("Enemy3.png");
 	m_pGameContext->TextureFactory()->NewTexture("Enemy4.png");
+    m_pGameContext->TextureFactory()->NewTexture("orb.png");
     
-    m_pGameContext->FontFactory()->NewFont( "font.ttf", 32 );
+    m_pGameContext->FontFactory()->NewFont( DEFAULT_FONT, 32 );
+    m_pHUDFont = m_pGameContext->FontFactory()->GetFont( DEFAULT_FONT, 32 );
     
-    texture = m_pGameContext->FontFactory()->GetFont( "font.ttf", 32 )->GetFontSheet().GetTexture();
-
     m_PixelMat = m_pGameContext->TextureFactory()->GetObjectContent( "pixel.png" );
     
     m_pPlayerEntity = m_pGameContext->CreatePlayerEntity();
@@ -121,7 +122,8 @@ void CGameState::Draw()
         m_pGameContext->DrawStarBackground();
 
         m_pGameContext->EntityManager()->DrawAllEntitiesAtDepth( 1 );
-        
+        m_pGameContext->EntityManager()->DrawAllEntitiesAtDepth( 2 );
+    
         m_fboBullets.BeginDrawingToFBO();
             m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
             m_pGameContext->EntityManager()->DrawAllEntitiesAtDepth( 0 );
@@ -157,6 +159,32 @@ void CGameState::Draw()
     
         float armor_mul = ( m_pPlayerEntity->GetArmor() > 0.0f )? m_pPlayerEntity->GetArmor() / 100.0f : 0.0f;
         float health_mul = ( m_pPlayerEntity->GetHealth() > 0.0f )? m_pPlayerEntity->GetHealth() / 100.0f : 0.0f;
+    
+        float heightmul = .5f;
+    
+        Vector2< float > hudSize;
+        hudSize.Set( SCREEN_WIDTH, 55.0f );
+    
+        Vector2< float > hudStart;
+        hudStart.Set( 0.0f, SCREEN_HEIGHT - hudSize.GetY() );
+    
+        int nhealthbars = m_pPlayerEntity->GetHealth() / 10 + 1;
+
+        if( m_pPlayerEntity->GetHealth() <= 0 )
+            nhealthbars = 0;
+    
+        m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, hudStart.GetX(), hudStart.GetY(), hudSize.GetX(), hudSize.GetY(), 0.0f, 0.0f, 0.0f, 1.0f );
+    
+    
+        for( int i = 0; i < nhealthbars; i++ )
+            m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, hudStart.GetX() + 10 + i * 20, hudStart.GetY() + ( float )hudSize.GetY() * ( 1.0f - heightmul ) * .5f, 10.0f, hudSize.GetY() * heightmul, 0.0f, 0.6f, 0.0f, 1.0f );
+    
+        char expstr[255];
+        sprintf( expstr, "EXP: %d", m_pGameContext->GetPlayerEXP() );
+    
+        int textwidth = m_pHUDFont->GetStringWidth( expstr );
+        m_pHUDFont->DrawString( m_pGameContext->DrawContext(), expstr, SCREEN_WIDTH - 10 - textwidth, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f );
+    
 /*
         m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, 10.0f, 545.0f, 150.0f, 10.0f, 1.0f, 1.0f, 1.0f, 0.5f );
         m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, 11.0f, 546.0f, 148.0f * armor_mul, 8.0f, 0.3f, 0.3f, 1.0f, 1.0f );
