@@ -14,10 +14,21 @@ public:
     virtual CShipEntity * GetPlayerEntity() = 0;
     virtual CShipEntity * CreatePlayerEntity() = 0;
     virtual CShipEntity * CreateRandomEnemyEntity() = 0;
+    virtual CShipEntity * CreateRandomEnemyEntity( int ) = 0;
+    virtual int CreateEnemyFormation( bool, int, int ) = 0;
+    virtual int CreateRandomEnemyFormation( bool ) = 0;
     virtual CAIEntity * FireBulletFrom( int type, float x, float y, float dmg, float speed ) = 0;
     virtual void FireBulletFrom( int type, CShipEntity * pShip, float speed ) = 0;
     virtual void AddEnemyToGenQueue( int, float ) = 0;
     virtual void ClearGenQueue() = 0;
+    virtual long int TicksElapsed() = 0;
+    virtual void FreezeTicksElapsed() = 0;
+    virtual void UnfreezeTicksElapsed() = 0;
+    virtual int GetRetryCount() = 0;
+    virtual int GetEnemyCount() = 0;
+    virtual int GetCurrentMission() = 0;
+    virtual void IncrementEnemyCount() = 0;
+    virtual void NextMission() = 0;
     
 	CLuaContext() : CGameContext() { }
 	virtual ~CLuaContext() { }

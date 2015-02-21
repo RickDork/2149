@@ -20,6 +20,8 @@ void CGameState::Init()
     
     m_fboBullets.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
     m_fboBullets2.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
+    
+    m_GameTimer = 0;
 
     m_bInit = true;
 
@@ -39,15 +41,27 @@ void CGameState::PostInit()
 	m_pGameContext->TextureFactory()->NewTexture("Enemy2.png");
 	m_pGameContext->TextureFactory()->NewTexture("Enemy3.png");
 	m_pGameContext->TextureFactory()->NewTexture("Enemy4.png");
+    m_pGameContext->TextureFactory()->NewTexture("Enemy5.png");
+    m_pGameContext->TextureFactory()->NewTexture("Enemy6.png");
+    m_pGameContext->TextureFactory()->NewTexture("Enemy7.png");
     m_pGameContext->TextureFactory()->NewTexture("orb.png");
+    m_pGameContext->TextureFactory()->NewTexture("orb2.png");
     
     m_pGameContext->FontFactory()->NewFont( DEFAULT_FONT, 32 );
+    m_pGameContext->FontFactory()->NewFont( DEFAULT_FONT, 64 );
+    m_pGameContext->FontFactory()->NewFont( DEFAULT_FONT, 72 );
+
     m_pHUDFont = m_pGameContext->FontFactory()->GetFont( DEFAULT_FONT, 32 );
     
     m_PixelMat = m_pGameContext->TextureFactory()->GetObjectContent( "pixel.png" );
     
-    m_pPlayerEntity = m_pGameContext->CreatePlayerEntity();
-
+    m_pGameContext->GameplayStart();
+    
+    m_pPlayerEntity = m_pGameContext->GetPlayerEntity();
+    
+    m_NextSecondsFlash = SDL_GetTicks() + SECONDS_FLASH_TIME;
+    m_DrawSeconds = true;
+    
 	m_pGameContext->CreateStarBackground();
 
     m_bPostInit = true;
@@ -64,19 +78,33 @@ void CGameState::Input()
     static const float plyMoveSpeedX = 500.0f;
     static const float plyMoveSpeedY = 500.0f;
 
-    if( m_GameInput.KeyDown( SDL_SCANCODE_A ) )
-        m_pPlayerEntity->Displace( -1.0f * plyMoveSpeedX * m_pGameContext->GetFrameDelta(), 0.0f );
-
-    if( m_GameInput.KeyDown( SDL_SCANCODE_D ) )
-        m_pPlayerEntity->Displace( plyMoveSpeedX * m_pGameContext->GetFrameDelta(), 0.0f );
-
-    if( m_GameInput.KeyDown( SDL_SCANCODE_W ) )
-        m_pPlayerEntity->Displace( 0.0f, -1.0f * plyMoveSpeedY * m_pGameContext->GetFrameDelta() );
-
-    if( m_GameInput.KeyDown( SDL_SCANCODE_S ) )
-        m_pPlayerEntity->Displace( 0.0f, plyMoveSpeedY * m_pGameContext->GetFrameDelta() );
+    if( m_pPlayerEntity ) {
     
-    m_pPlayerEntity->FitIn( 0.0f, 0.0f, SCREEN_WIDTH - 50.0f, SCREEN_HEIGHT - 50.0f );
+        if( m_GameInput.KeyDown( SDL_SCANCODE_A ) )
+            m_pPlayerEntity->Displace( -1.0f * plyMoveSpeedX * m_pGameContext->GetFrameDelta(), 0.0f );
+
+        if( m_GameInput.KeyDown( SDL_SCANCODE_D ) )
+            m_pPlayerEntity->Displace( plyMoveSpeedX * m_pGameContext->GetFrameDelta(), 0.0f );
+
+        if( m_GameInput.KeyDown( SDL_SCANCODE_W ) )
+            m_pPlayerEntity->Displace( 0.0f, -1.0f * plyMoveSpeedY * m_pGameContext->GetFrameDelta() );
+
+        if( m_GameInput.KeyDown( SDL_SCANCODE_S ) )
+            m_pPlayerEntity->Displace( 0.0f, plyMoveSpeedY * m_pGameContext->GetFrameDelta() );
+        
+        m_pPlayerEntity->FitIn( 0.0f, 0.0f, SCREEN_WIDTH - 50.0f, SCREEN_HEIGHT - 100.0f );
+        
+    } else {
+     
+        if( m_GameInput.KeyDown( SDL_SCANCODE_RETURN ) ) {
+         
+            m_pGameContext->IncrementRetryCount();
+            m_pGameContext->GameplayStart();
+            
+        }
+        
+    }
+    
 /*
     if( m_GameInput.KeyDown( SDL_SCANCODE_SPACE ) )
     {
@@ -104,12 +132,18 @@ void CGameState::Think()
 
     m_pGameContext->GameLogic();
 
-    if( m_pPlayerEntity->CanShoot() )
-    {
+    m_pPlayerEntity = m_pGameContext->GetPlayerEntity();
+    
+    if( m_pPlayerEntity ) {
         
-        m_pGameContext->FireBulletFrom( ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f );
-        m_pPlayerEntity->SetNextShotTime( SDL_GetTicks() + 200 );
-        
+        if( m_pPlayerEntity->CanShoot() && m_pGameContext->GetCurrentEnemyCount() > 0 )
+        {
+            
+            m_pGameContext->FireBulletFrom( ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f );
+            m_pPlayerEntity->SetNextShotTime( SDL_GetTicks() + 200 );
+            
+        }
+
     }
     
 }
@@ -157,9 +191,7 @@ void CGameState::Draw()
     
         m_pGameContext->DrawExplosions();
     
-        float armor_mul = ( m_pPlayerEntity->GetArmor() > 0.0f )? m_pPlayerEntity->GetArmor() / 100.0f : 0.0f;
-        float health_mul = ( m_pPlayerEntity->GetHealth() > 0.0f )? m_pPlayerEntity->GetHealth() / 100.0f : 0.0f;
-    
+     
         float heightmul = .5f;
     
         Vector2< float > hudSize;
@@ -168,22 +200,69 @@ void CGameState::Draw()
         Vector2< float > hudStart;
         hudStart.Set( 0.0f, SCREEN_HEIGHT - hudSize.GetY() );
     
-        int nhealthbars = m_pPlayerEntity->GetHealth() / 10 + 1;
-
-        if( m_pPlayerEntity->GetHealth() <= 0 )
-            nhealthbars = 0;
-    
         m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, hudStart.GetX(), hudStart.GetY(), hudSize.GetX(), hudSize.GetY(), 0.0f, 0.0f, 0.0f, 1.0f );
     
-    
-        for( int i = 0; i < nhealthbars; i++ )
-            m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, hudStart.GetX() + 10 + i * 20, hudStart.GetY() + ( float )hudSize.GetY() * ( 1.0f - heightmul ) * .5f, 10.0f, hudSize.GetY() * heightmul, 0.0f, 0.6f, 0.0f, 1.0f );
+        if( m_pPlayerEntity ) {
+        
+            int nhealthbars = m_pPlayerEntity->GetHealth() / 10 + 1;
+            int maxhealthbars = m_pPlayerEntity->GetMaxHealth() / 10 + 1;
+            
+            if( m_pPlayerEntity->GetHealth() <= 0 )
+                nhealthbars = 0;
+        
+            for( int i = 0; i < maxhealthbars; i++ ) {
+             
+                float r = 0.0f, g = .6f, b = 0.0f, a = 1.0f;
+                
+                if( i >= nhealthbars ) {
+                 
+                    r = .2f;
+                    g = .2f;
+                    b = .2f;
+                    
+                }
+                
+                m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, hudStart.GetX() + 10 + i * 20, hudStart.GetY() + ( float )hudSize.GetY() * ( 1.0f - heightmul ) * .5f, 10.0f, hudSize.GetY() * heightmul, r, g, b, a );
+                
+            }
+        }
     
         char expstr[255];
         sprintf( expstr, "EXP: %d", m_pGameContext->GetPlayerEXP() );
     
         int textwidth = m_pHUDFont->GetStringWidth( expstr );
-        m_pHUDFont->DrawString( m_pGameContext->DrawContext(), expstr, SCREEN_WIDTH - 10 - textwidth, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f );
+        m_pHUDFont->DrawString( m_pGameContext->DrawContext(), expstr, SCREEN_WIDTH - 10 - textwidth, SCREEN_HEIGHT - 50.0f, 1.0f, 1.0f, 1.0f, 1.0f );
+    
+        if( m_pPlayerEntity )
+            m_GameTimer = m_pGameContext->TicksElapsed();
+    
+        Vector2< int > time = Util::ConvertTicksIntoMS( m_GameTimer );
+    
+        char timestr[255];
+    
+        if( m_DrawSeconds )
+            sprintf( timestr, "%02d:%02d", time.GetX(), time.GetY() );
+        else
+            sprintf( timestr, "%02d:", time.GetX() );
+    
+        if( !m_pPlayerEntity ) {
+
+            m_pGameContext->FontFactory()->GetFont( DEFAULT_FONT, 64 )->DrawString( m_pGameContext->DrawContext(), GAMEOVER_TEXT, SCREEN_WIDTH * .5f, SCREEN_HEIGHT * .5f, 0.8f, 0.0f, 0.0f, 1.0f, DRAW_TEXT_VERT_CENTER | DRAW_TEXT_HORIZ_CENTER );
+            
+            m_pHUDFont->DrawString( m_pGameContext->DrawContext(), "Press [ENTER] to restart", SCREEN_WIDTH * .5f, SCREEN_HEIGHT * .5f + 50, 1.0f, 1.0f, 1.0f, 1.0f, DRAW_TEXT_HORIZ_CENTER );
+            
+        }
+    
+        /*
+        if( SDL_GetTicks() > m_NextSecondsFlash ) {
+            m_NextSecondsFlash = SECONDS_FLASH_TIME + SDL_GetTicks();
+            m_DrawSeconds = !m_DrawSeconds;
+        }*/
+    
+        m_pHUDFont->DrawString( m_pGameContext->DrawContext(), timestr, SCREEN_WIDTH * .5 - 50, SCREEN_HEIGHT - 50.0f, 1.0f, 1.0f, 1.0f, 1.0f );
+    
+        m_pGameContext->Lua().CallEngineFunction( "Draw" );
+    
     
 /*
         m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, 10.0f, 545.0f, 150.0f, 10.0f, 1.0f, 1.0f, 1.0f, 0.5f );

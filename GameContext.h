@@ -46,6 +46,8 @@ private:
     int m_CurEnemyCount;
     int m_NextEnemySpawn;
     int m_PlayerEXP;
+    int m_RetryCount;
+    int m_CurrentMission;
 
     boost::ptr_vector< CStar > m_pStars;
     boost::ptr_vector< CParticleExplosion > m_pExplosions;
@@ -61,8 +63,15 @@ private:
 	std::vector< CEnemyData > m_EnemyData;
     std::vector< CEnemyGenQueue > m_EnemyGenQueue;
     
+    int m_MaxGenQueueProbability;
+    
+    bool m_bGameTicksFrozen;
+    long int m_GameTicksFreezeTime;
+    
     bool bIter;
     std::vector< CEntity * > bulletvec;
+    
+    long int m_GameStartTime;
 
     void DoEnemyGenerator();
 
@@ -71,15 +80,94 @@ private:
 	void LoadEnemyData();
  
 public:
+    
 
     void InitializePhysicsWorld();
     void InitializeLua();
     void InitializeGraphics();
     void InitializeData();
+    
+    void GameplayStart();
+    
+    void NextMission();
+    
+    int GetCurrentMission() {
+        
+        return m_CurrentMission;
+        
+    }
+    
+    int GetEnemyCount() {
+     
+        return m_CurEnemyCount;
+        
+    }
+    
+    int GetRetryCount() {
+     
+        return m_RetryCount;
+        
+    }
+    
+    void SetRetryCount( int c ) {
+     
+        m_RetryCount = c;
+        
+    }
+    
+    void IncrementRetryCount() {
+     
+        m_RetryCount++;
+        
+    }
 
+    void SetGameStartTime( int t ) {
+     
+        m_GameStartTime = t;
+        
+    }
+    
+    CTOFNLua & Lua() {
+     
+        return m_Lua;
+        
+    }
+    
+    void IncrementEnemyCount() {
+     
+        m_CurEnemyCount++;
+        
+    }
+    
+    void FreezeTicksElapsed() {
+     
+        m_GameTicksFreezeTime = TicksElapsed();
+        m_bGameTicksFrozen = true;
+        
+    }
+    
+    void UnfreezeTicksElapsed() {
+     
+        m_GameStartTime = SDL_GetTicks() - m_GameTicksFreezeTime;
+        m_bGameTicksFrozen = false;
+        
+    }
+    
+    long int TicksElapsed() {
+        
+        return ( m_bGameTicksFrozen )? m_GameTicksFreezeTime : SDL_GetTicks() - m_GameStartTime;
+        
+    }
+    
     void SetMaxEnemyCount( int n ) {
      
         m_MaxEnemyCount = n;
+        
+    }
+    
+    int GetCurrentEnemyCount() {
+     
+        return m_CurEnemyCount;
         
     }
     
@@ -119,9 +207,11 @@ public:
     CParticleExplosion * CreateExplosion( int, float, float );
     CShipEntity * CreatePlayerEntity();
 	CShipEntity * CreateEnemyEntity( int, float, float, float );
+    int CreateEnemyFormation( bool, int, int );
     int CreateRandomEnemyFormation( bool );
     CShipEntity * CreateRandomEnemyEntity();
-   
+    CShipEntity * CreateRandomEnemyEntity( int );
+    int GetRandomEnemyType();
     CAIEntity * FireBulletFrom( int, float, float, float, float );
     void FireBulletFrom( int, CShipEntity * , float );
 

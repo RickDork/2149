@@ -3,6 +3,7 @@
 
 #include "SoraIncludes.h"
 #include "EntityManager.h"
+#include "Define.h"
 #include "LuaContext.h"
 
 class CTOFNLua : public CLuaObject

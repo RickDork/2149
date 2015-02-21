@@ -14,6 +14,7 @@ public:
 	int m_Health;
 	int m_SpeedMin, m_SpeedMax;
 	int m_Width, m_Height;
+    bool m_bCanBeInFormation;
 	int m_CollisionBoxWidth, m_CollisionBoxHeight;
 	std::string m_Sprite;
 

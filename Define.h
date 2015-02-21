@@ -4,6 +4,6 @@
 #define SCREEN_WIDTH 1024.0f
 #define SCREEN_HEIGHT 768.0f
 
-#define DEFAULT_FONT "font.ttf"
+#define DEFAULT_FONT "Minecraftia-Regular.ttf"
 
 #endif

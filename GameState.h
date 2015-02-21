@@ -8,6 +8,9 @@
 #include "Entity.h"
 #include "Define.h"
 
+#define SECONDS_FLASH_TIME 300
+#define GAMEOVER_TEXT "YOU ARE SPACE DUST!"
+
 class CGameState : public CState< CTOFNContext >
 {
 
@@ -20,6 +23,11 @@ private:
     CFontMaterial * m_pHUDFont;
     CFrameBufferObject m_fboBullets, m_fboBullets2;
 
+    bool m_DrawSeconds;
+    long int m_NextSecondsFlash;
+    
+    long int m_GameTimer;
+    
 public:
 
     CGameState();

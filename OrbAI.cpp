@@ -19,6 +19,7 @@ void COrbAI::Think() {
     COrbEntity * o = ( COrbEntity * )m_pTargetEntity;
     CShipEntity * ply = ( CShipEntity  * )m_pEntityContext->GetPlayerEntity();
     
+    
     float speed = 100.0f + m_StartVel;
     
     o->Displace2( std::cos( m_TrajAng * DEG2RAD ) * speed, std::sin( m_TrajAng * DEG2RAD ) * speed );
@@ -37,7 +38,7 @@ void COrbAI::Think() {
         
         float mul = ( pdist > ndist )? -1.0f : 1.0f;
         
-        m_TrajAng += mul * 150.0f * p->GetFrameDelta();
+        m_TrajAng += mul * 200.0f * p->GetFrameDelta();
         
         if( m_TrajAng > 360.0f )
             m_TrajAng -= 360.0f;
