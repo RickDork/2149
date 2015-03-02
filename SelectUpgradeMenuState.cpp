@@ -66,12 +66,14 @@ void CSelectUpgradeMenuState::OnStateSwitch() {
         
     }
     
+    
 }
 
 void CSelectUpgradeMenuState::Input()
 {
     
     m_GameInput.Poll();
+    
     
     if( m_GameInput.EventType() == SDL_KEYDOWN ) {
     
@@ -99,14 +101,15 @@ void CSelectUpgradeMenuState::Input()
             
         }
         
-    }
-    
-    if( m_GameInput.KeyDown( SDL_SCANCODE_RETURN ) ) {
-     
-        m_pGameContext->SetStarFieldComingAtYou( false );
-        SwitchToAnotherState( "GAME" );
+        if( m_GameInput.KeyDownOnce( SDLK_RETURN ) ) {
+           
+            m_pGameContext->SetStarFieldComingAtYou( false );
+            SwitchToAnotherState( "GAME" );
+            
+        }
         
     }
+    
   
     if( m_GameInput.KeyDown( SDL_SCANCODE_ESCAPE ) )
     {

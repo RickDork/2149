@@ -5,7 +5,7 @@
 #include "CoreFoundation/CoreFoundation.h"
 #endif
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 4000 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 3 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false )
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 1 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false )
 {
 
 }
@@ -147,7 +147,7 @@ void CTOFNContext::GameplayStart() {
 }
 
 void CTOFNContext::NextMission() {
- 
+    
     m_RetryCount = 0;
     m_CurrentMission++;
     
@@ -293,7 +293,7 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
 	ent->AddGun( .7f, .23f, gunDmg );
 
     if( HasUpgrade( 0 ) )
-        ent->AddGun( .5f, .2f, gunDmg );
+        ent->AddGun( .5f, .1f, gunDmg );
     
     if( m_pPlayerEntity )
         m_pEntityManager->RemoveEntity( m_pPlayerEntity );

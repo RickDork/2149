@@ -21,6 +21,8 @@ CGame::CGame()
 
     m_GraphicsContext.GetWindowSize( &width, &height );
     
+    m_GraphicsContext.SetClearColor( .1f, .1f, .1f, 1.0f );
+    
     SDL_ShowCursor( 0 );
 
     m_DrawContext.UseShaderProgram( shaderID );

@@ -35,21 +35,18 @@ void CGameState::PostInit()
     m_DrawSeconds = true;
     
     m_bPostInit = true;
-    
-    OnStateSwitch();
 
     Log::Debug( "Ready to do game loop" );
 
 }
 
 void CGameState::OnStateSwitch() {
-    
+
     m_pGameContext->CreateStarBackground();
     
     m_pGameContext->GameplayStart();
     
     m_pPlayerEntity = m_pGameContext->GetPlayerEntity();
-
     
 }
 
@@ -77,10 +74,10 @@ void CGameState::Input()
         
         m_pPlayerEntity->FitIn( 0.0f, 0.0f, SCREEN_WIDTH - 50.0f, SCREEN_HEIGHT - 100.0f );
         
-    } else {
+    } else if( !m_pPlayerEntity ) {
      
         if( m_GameInput.KeyDown( SDL_SCANCODE_RETURN ) ) {
-         
+            
             m_pGameContext->IncrementRetryCount();
             m_pGameContext->GameplayStart();
             
@@ -159,7 +156,7 @@ void CGameState::Think()
         }
         
     } else {
-     
+        
         SwitchToAnotherState( "UPGRADESELECT" );
         
     }
