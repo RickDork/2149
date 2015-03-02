@@ -27,8 +27,11 @@ public:
     virtual int GetRetryCount() = 0;
     virtual int GetEnemyCount() = 0;
     virtual int GetCurrentMission() = 0;
+    virtual void SetRetryCount( int ) = 0;
     virtual void IncrementEnemyCount() = 0;
     virtual void NextMission() = 0;
+    virtual void SetShouldDrawHUD( bool ) = 0;
+    virtual void TogglePlayerInput( bool ) = 0;
     
 	CLuaContext() : CGameContext() { }
 	virtual ~CLuaContext() { }

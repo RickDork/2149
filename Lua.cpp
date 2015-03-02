@@ -1,6 +1,7 @@
 #include "Lua.h"
 
 CLuaContext * gLuaContext = NULL;
+CTextureImage * gPixelImage = NULL;
 
 void SetLuaContext( CLuaContext * pLuaContext )
 {
@@ -230,6 +231,93 @@ LuaCallBackFunction( GotoNextMission ) {
     
 }
 
+LuaCallBackFunction( GetStringWidth ) {
+ 
+    std::string font = LString( 1 );
+    int size = LNumber( 2 );
+    std::string text = LString( 3 );
+    
+    lua_pushnumber( pLuaState, gLuaContext->FontFactory()->GetFont( font, size )->GetStringWidth( text ) );
+    
+    return 1;
+    
+}
+
+LuaCallBackFunction( DrawTexture ) {
+ 
+    std::string texture = LString( 1 );
+    float x = LNumber( 2 );
+    float y = LNumber( 3 );
+    int width = LNumber( 4 );
+    int height = LNumber( 5 );
+    
+    float r = 1.0f, g = 1.0f, b = 1.0f, a = 1.0f;
+    
+    if( LArgCount() > 6 ) {
+        
+        r = LNumber( 6 ) / 255.0f;
+        g = LNumber( 7 ) / 255.0f;
+        b = LNumber( 8 ) / 255.0f;
+        a = LNumber( 9 ) / 255.0f;
+
+    }
+    
+    CTextureImage * i = NULL;
+    
+    if( texture == "pixel.png" ) {
+      
+        if( !gPixelImage )
+            gPixelImage = gLuaContext->TextureFactory()->GetObjectContent( "pixel.png" );
+        
+        i = gPixelImage;
+            
+    } else
+        i = gLuaContext->TextureFactory()->GetObjectContent( texture );
+    
+    if( i )
+        gLuaContext->DrawContext()->DrawMaterial( *i, x, y, width, height, r, g, b, a );
+
+    
+    return 0;
+    
+}
+
+LuaCallBackFunction( MakeStringFit ) {
+ 
+    std::string text = LString( 1 );
+    int width = LNumber( 2 );
+    std::string font = LString( 3 );
+    int fontsize = LNumber( 4 );
+    
+    lua_pushstring( pLuaState, gLuaContext->FontFactory()->GetFont( font, fontsize )->MakeFit( text, width ).c_str() );
+    
+    return 1;
+    
+}
+
+
+LuaCallBackFunction( TogglePlayerInput ) {
+    
+    bool b = LBoolean( 1 );
+    
+    gLuaContext->TogglePlayerInput( b );
+    
+    return 0;
+    
+}
+
+
+
+LuaCallBackFunction( SetDrawHUD ) {
+    
+    bool b = LBoolean( 1 );
+    
+    gLuaContext->SetShouldDrawHUD( b );
+    
+    return 0;
+    
+}
+
 
 void CTOFNLua::CreateLuaHooks()
 {
@@ -248,10 +336,14 @@ void CTOFNLua::CreateLuaHooks()
         LuaNameSpaceFunction( m_pLuaState, "Game", GetEnemyCount );
         LuaNameSpaceFunction( m_pLuaState, "Game", GetCurrentMission );
         LuaNameSpaceFunction( m_pLuaState, "Game", GotoNextMission );
-
+        LuaNameSpaceFunction( m_pLuaState, "Game", GetStringWidth );
+        LuaNameSpaceFunction( m_pLuaState, "Game", MakeStringFit );
+        LuaNameSpaceFunction( m_pLuaState, "Game", TogglePlayerInput );
     
     LuaNameSpace( m_pLuaState, "Draw" );
         LuaNameSpaceFunction( m_pLuaState, "Draw", DrawString );
+        LuaNameSpaceFunction( m_pLuaState, "Draw", DrawTexture );
+        LuaNameSpaceFunction( m_pLuaState, "Draw", SetDrawHUD );
     
     LuaFunction( m_pLuaState, TicksElapsed );
     LuaFunction( m_pLuaState, FreezeGameTicks );

@@ -48,11 +48,16 @@ private:
     int m_PlayerEXP;
     int m_RetryCount;
     int m_CurrentMission;
+    int m_StartingEXP;
+    bool m_bMissionOver;
 
     boost::ptr_vector< CStar > m_pStars;
     boost::ptr_vector< CParticleExplosion > m_pExplosions;
     
+    std::vector< int > m_Upgrades;
+    
     CInstancedParticleEngine m_StarEngine;
+    bool m_bCreatedStarField, m_bStarFieldUpgradeSelect;
     //GLuint m_InstancedBuffer, m_InstancedRGBABuffer;
 
     CTOFNLua m_Lua;
@@ -68,6 +73,7 @@ private:
     bool m_bGameTicksFrozen;
     long int m_GameTicksFreezeTime;
     
+    bool m_bDrawHUD, m_bPlayerInput;
     bool bIter;
     std::vector< CEntity * > bulletvec;
     
@@ -78,7 +84,9 @@ private:
 	void RandomizeStar( CStar * );
 
 	void LoadEnemyData();
- 
+
+    std::vector< int > m_SelectableUpgrades;
+    
 public:
     
 
@@ -86,10 +94,62 @@ public:
     void InitializeLua();
     void InitializeGraphics();
     void InitializeData();
+    void Initialize();
     
     void GameplayStart();
     
     void NextMission();
+    
+    bool ShouldDrawHUD() {
+     
+        return m_bDrawHUD;
+        
+    }
+    
+    bool PlayerInputEnabled() {
+     
+        return m_bPlayerInput;
+        
+    }
+    
+    void GetCurrentSelectableUpgrades();
+    
+    int NumberOfSelectableUpgrades() {
+     
+        return m_SelectableUpgrades.size();
+        
+    }
+    
+    int GetSelectableUpgrade( int i ) {
+     
+        return m_SelectableUpgrades.at( i );
+        
+    }
+    
+    void SetStarFieldComingAtYou( bool b ) {
+     
+        m_bStarFieldUpgradeSelect = b;
+        
+    }
+    
+    
+    void TogglePlayerInput( bool b ) {
+     
+        m_bPlayerInput = b;
+        
+    }
+    
+    bool IsMissionOver() {
+        
+        return m_bMissionOver;
+        
+    }
+    
+    void SetShouldDrawHUD( bool b ) {
+     
+        m_bDrawHUD = b;
+        
+    }
     
     int GetCurrentMission() {
         
@@ -190,6 +250,10 @@ public:
 
     }
 
+    void GiveUpgrade( int, int );
+    void RemoveUpgrade( int, int );
+    bool HasUpgrade( int ); 
+    
     void UpdateAllEntities();
     void UpdateExplosions();
 
@@ -212,7 +276,9 @@ public:
     CShipEntity * CreateRandomEnemyEntity();
     CShipEntity * CreateRandomEnemyEntity( int );
     int GetRandomEnemyType();
+    CAIEntity * FireBulletFrom( int, float, float, float, float, float );
     CAIEntity * FireBulletFrom( int, float, float, float, float );
+    void FireBulletFromGunAtAngle( int, int, CShipEntity *, float, float );
     void FireBulletFrom( int, CShipEntity * , float );
 
     void HandleEntityContact( void *, int, void *, int );
@@ -220,6 +286,7 @@ public:
     void GameLogic();
 
     CTOFNContext();
+    virtual ~CTOFNContext() { }
 
 };
 

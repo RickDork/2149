@@ -10,6 +10,7 @@ public:
 	int m_Size;
     float m_R, m_G, m_B, m_A;
     float m_Speed;
+    float m_Angle;
 
 };
 

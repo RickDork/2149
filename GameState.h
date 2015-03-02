@@ -34,6 +34,7 @@ public:
 
     void Init();
     void PostInit();
+    void OnStateSwitch();
 
     void Input();
     void Think();

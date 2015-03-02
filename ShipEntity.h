@@ -140,6 +140,12 @@ public:
         
     }
     
+    void SetMaxHealth( int i ) {
+     
+        m_MaxHealth = i;
+        
+    }
+    
     int GetMaxHealth() {
      
         return m_MaxHealth;

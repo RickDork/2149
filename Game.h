@@ -5,6 +5,7 @@
 #include "GameState.h"
 #include "GameContext.h"
 #include "EntityManager.h"
+#include "SelectUpgradeMenuState.h"
 #include "Define.h"
 
 

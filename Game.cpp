@@ -20,6 +20,8 @@ CGame::CGame()
     int width, height;
 
     m_GraphicsContext.GetWindowSize( &width, &height );
+    
+    SDL_ShowCursor( 0 );
 
     m_DrawContext.UseShaderProgram( shaderID );
     m_DrawContext.Calculate2DProjectionMatrix( width, height );
@@ -38,14 +40,19 @@ CGame::CGame()
     m_GameContext.SetTextureFactory( &m_TextureFactory );
     m_GameContext.SetFTContext( &m_FTContext );
     m_GameContext.SetFontFactory( &m_FontFactory );
-
+    m_GameContext.Initialize();
+    
     Log::Debug( "Game Context initialized" );
 
     CGameState * pGameState = new CGameState;
     pGameState->SetGameContext( &m_GameContext );
+    
+    CSelectUpgradeMenuState * pSelectUpgradeMenuState = new CSelectUpgradeMenuState;
+    pSelectUpgradeMenuState->SetGameContext( &m_GameContext );
 
-    m_StateMachine.AddState( "GAME", ( CStateBase * )pGameState, true );
-
+    m_StateMachine.AddState( "GAME", ( CStateBase * )pGameState );
+    m_StateMachine.AddState( "UPGRADESELECT", ( CSelectUpgradeMenuState * )pSelectUpgradeMenuState, true );
+    
     Log::Debug( "State Machine initialized\nStarting main loop" );
 
     while( true )

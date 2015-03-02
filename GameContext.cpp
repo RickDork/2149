@@ -5,7 +5,7 @@
 #include "CoreFoundation/CoreFoundation.h"
 #endif
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 2 )
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 4000 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 3 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false )
 {
 
 }
@@ -64,6 +64,63 @@ void CTOFNContext::InitializeData()
 
 }
 
+void CTOFNContext::Initialize() {
+    
+    InitializePhysicsWorld();
+    InitializeLua();
+    InitializeGraphics();
+    InitializeData();
+    
+    TextureFactory()->NewTexture( "player2.png" );
+    TextureFactory()->NewTexture("star.png");
+    TextureFactory()->NewTexture("ball.png");
+    TextureFactory()->NewTexture("pixel.png");
+    TextureFactory()->NewTexture("bullet.png");
+    TextureFactory()->NewTexture("Enemy.png");
+    TextureFactory()->NewTexture("Enemy2.png");
+    TextureFactory()->NewTexture("Enemy3.png");
+    TextureFactory()->NewTexture("Enemy4.png");
+    TextureFactory()->NewTexture("Enemy5.png");
+    TextureFactory()->NewTexture("Enemy6.png");
+    TextureFactory()->NewTexture("Enemy7.png");
+    TextureFactory()->NewTexture("orb.png");
+    TextureFactory()->NewTexture("orb2.png");
+    TextureFactory()->NewTexture("playerprofile.png");
+    TextureFactory()->NewTexture("aiprofile.png");
+    TextureFactory()->NewTexture("squadmateprofile.png");
+    TextureFactory()->NewTexture("key.png");
+    TextureFactory()->NewTexture("longkey.png");
+    
+    FontFactory()->NewFont( DEFAULT_FONT, 18 );
+    FontFactory()->NewFont( DEFAULT_FONT, 32 );
+    FontFactory()->NewFont( DEFAULT_FONT, 64 );
+    FontFactory()->NewFont( DEFAULT_FONT, 72 );
+    
+}
+
+void CTOFNContext::GetCurrentSelectableUpgrades() {
+    
+    m_SelectableUpgrades.clear();
+    
+    switch( m_CurrentMission ) {
+     
+        case 1:
+            for( int i = 0; i < 3; i++ )
+                m_SelectableUpgrades.push_back( i );
+            break;
+        case 2:
+            for( int i = 3; i < 6; i++ )
+                m_SelectableUpgrades.push_back( i );
+            break;
+        case 3:
+            for( int i = 6; i < 10; i++ )
+                m_SelectableUpgrades.push_back( i );
+            break;
+            
+    }
+    
+}
+
 void CTOFNContext::GameplayStart() {
  
     m_pEntityManager->RemoveAllDeletedEntities();
@@ -77,7 +134,10 @@ void CTOFNContext::GameplayStart() {
     m_EnemyGenQueue.clear();
     m_MaxGenQueueProbability = 0;
     m_NextEnemySpawn = 0;
-    m_PlayerEXP = 0;
+    m_PlayerEXP = m_StartingEXP;
+    m_bGameTicksFrozen = false;
+    m_GameTicksFreezeTime = SDL_GetTicks();
+    m_bMissionOver = false;
     
     CreatePlayerEntity();
     SetGameStartTime( SDL_GetTicks() );
@@ -88,8 +148,12 @@ void CTOFNContext::GameplayStart() {
 
 void CTOFNContext::NextMission() {
  
+    m_RetryCount = 0;
     m_CurrentMission++;
-    GameplayStart();
+    
+    m_bMissionOver = true;
+    
+    //GameplayStart();
     
 }
 
@@ -163,6 +227,35 @@ void CTOFNContext::LoadEnemyData()
 
 }
 
+void CTOFNContext::GiveUpgrade( int type, int cost ) {
+
+    m_PlayerEXP -= cost;
+    m_StartingEXP = m_PlayerEXP;
+    
+    m_Upgrades.push_back( type );
+    
+}
+
+void CTOFNContext::RemoveUpgrade( int type, int cost ) {
+    
+    m_PlayerEXP += cost;
+    m_StartingEXP = m_PlayerEXP;
+    
+    for( int j = 0; j < m_Upgrades.size(); j++ )
+    {
+        
+        if( m_Upgrades[j] == type ) {
+        
+            m_Upgrades.erase( m_Upgrades.begin() + j );
+            return; 
+            
+        }
+        
+    }
+    
+}
+
+
 CShipEntity * CTOFNContext::CreatePlayerEntity()
 {
 
@@ -170,7 +263,18 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
     static const float defaultPlayerPosY = 500.0f;
 
 	Log::Debug( "Creating player entity" );
+    
+    float gunDmg = 5.0f;
+    float health = 150.0f;
+    
+    if( HasUpgrade( 0 ) || HasUpgrade( 3 ) || HasUpgrade( 8 ) )
+        gunDmg = 3.0f;
 
+    if( HasUpgrade( 4 ) )
+        health = 300.0f;
+    else if( HasUpgrade( 1 ) )
+        health = 225.0f;
+    
     CShipEntity * ent = new CShipEntity;
 	ent->SetContext( this );
     ent->SetClassTypeID( ENTTYPE_PLAYER );
@@ -181,12 +285,16 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
     ent->SetGravity( 0 );
     ent->SetPos( defaultPlayerPosX, defaultPlayerPosY );
     ent->SetDrawDepth( 1 );
-    ent->SetHealth( 150.0f );
+    ent->SetHealth( health );
+    ent->SetMaxHealth( health );
     ent->SetArmor( 0.0f );
+    
+    ent->AddGun( .3f, .23f, gunDmg );
+	ent->AddGun( .7f, .23f, gunDmg );
 
-    ent->AddGun( .3f, .23f, 5.0f );
-	ent->AddGun( .7f, .23f, 5.0f );
-
+    if( HasUpgrade( 0 ) )
+        ent->AddGun( .5f, .2f, gunDmg );
+    
     if( m_pPlayerEntity )
         m_pEntityManager->RemoveEntity( m_pPlayerEntity );
 
@@ -199,6 +307,25 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
     return m_pPlayerEntity;
 
 }
+
+void CTOFNContext::FireBulletFromGunAtAngle( int gun, int type, CShipEntity * pShip, float speed, float angle )
+{
+    
+    const std::vector< Vector3< float > > & GunPos = pShip->GetGunPositions();
+    float pX, pY;
+    
+    pShip->GetPos().Get( &pX, &pY );
+        
+    float x, y;
+    float dmg = pShip->GetGunDamage( gun );
+    
+    GunPos[gun].Get( &x, &y );
+    
+    FireBulletFrom( type, pX + x, pY + y, dmg, speed, angle );
+    
+    
+}
+
 
 void CTOFNContext::FireBulletFrom( int type, CShipEntity * pShip, float speed )
 {
@@ -261,7 +388,50 @@ CParticleExplosion * CTOFNContext::CreateExplosion( int type, float x, float y )
 
 }
 
-CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, float dmg, float speed )
+CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, float dmg, float speed ) {
+ 
+    float ang = 0.0f;
+    
+    if( type == ENTTYPE_ENBULLET ) {
+  
+        ang = 270.0f;
+        
+        Vector2< float > p = m_pPlayerEntity->GetPos();
+        
+        if( Util::RandomNumber( 1, 10 ) < 8 )
+            ang = -Util::AngleBetweenPoints( x, y, p.GetX() + 45 + Util::RandomNumber( -50, 50 ), p.GetY() + 45 + Util::RandomNumber( -50, 50 ) );
+        
+        if( ang < 0.0f )
+            ang += 360.0f;
+        
+        ang = Util::MinF( ang, 0.0f, 200.0f );
+        ang = Util::MaxF( ang, 0.0f, 340.0f );
+        
+    } else {
+        
+        ang = 90.0f;
+        
+    }
+    
+    return FireBulletFrom( type, x, y, dmg, speed, ang );
+    
+}
+
+bool CTOFNContext::HasUpgrade( int type ) {
+ 
+    for( int j = 0; j < m_Upgrades.size(); j++ ) {
+     
+        if( m_Upgrades[j] == type )
+            return true;
+        
+    }
+    
+    return false;
+    
+}
+
+
+CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, float dmg, float speed, float angle )
 {
 
     CAIEntity * ent = new CAIEntity;
@@ -280,18 +450,7 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, float dmg,
         
         Vector2< float > p = m_pPlayerEntity->GetPos();
         
-        float ang = 270.0f;
-        
-        if( Util::RandomNumber( 1, 10 ) < 8 )
-            ang = -Util::AngleBetweenPoints( x, y, p.GetX() + 45 + Util::RandomNumber( -50, 50 ), p.GetY() + 45 + Util::RandomNumber( -50, 50 ) );
-        
-        if( ang < 0.0f )
-            ang += 360.0f;
-        
-        ang = Util::MinF( ang, 0.0f, 200.0f );
-        ang = Util::MaxF( ang, 0.0f, 340.0f );
-        
-        aic->SetAngle( ang );
+        aic->SetAngle( angle );
         
         sprite = "ball.png";
         sx = .5f;
@@ -303,7 +462,7 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, float dmg,
         g = 255.0f;
         b = 0.0f;
         
-        aic->SetAngle( 90.0f );
+        aic->SetAngle( angle );
         
     }
 
@@ -763,10 +922,17 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
             
             int t = orbEnt->GetType();
             
+            float mul = 1.0f;
+            
+            if( HasUpgrade( 7 ) )
+                mul = 2.5f;
+            else if( HasUpgrade( 5 ) )
+                mul = 1.5f;
+            
             if( t == 0 )
-                entA->Heal( 3.0f );
+                entA->Heal( 3.0f * mul );
             else
-                m_PlayerEXP += Util::RandomNumber( 5, 12 );
+                m_PlayerEXP += Util::RandomNumber( 5, 12 ) * mul;
             
             m_pEntityManager->DeleteEntity( orbEnt );
             
@@ -774,7 +940,14 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 		{
             
             entA->SetLastHurtTime( SDL_GetTicks() );
-            entA->Damage( 20 );
+            
+            if( HasUpgrade( 6 ) )
+                entA->Damage( 5 );
+            else if( HasUpgrade( 2 ) )
+                entA->Damage( 10 );
+            else
+                entA->Damage( 20 );
+            
             shipEnt->Damage( 30 );
 		}
 
@@ -809,25 +982,50 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 
 void CTOFNContext::CreateStarBackground()
 {
-
+    
     int winWidth, winHeight;
 
     m_pGraphicsContext->GetWindowSize( &winWidth, &winHeight );
 
     for( int j = 0; j < MAX_STARS; j++ )
     {
+        
+        CStar * s = NULL;
 
-        CStar * s = new CStar;
+        if( m_bCreatedStarField )
+            s = &m_pStars.at( j );
+        else
+            s = new CStar;
 
-        s->m_X = Util::RandomNumber( 0, winWidth );
-        s->m_Y = Util::RandomNumber( -500, winHeight );
+        if( m_bStarFieldUpgradeSelect ) {
 
+            s->m_X = winWidth * .5f;
+            s->m_Y = winHeight * .5f;
+            s->m_Angle = Util::RandomNumber( 0, 359 );
+            
+            float dist = Util::RandomNumber( 0, 600 );
+            
+            s->m_X += std::cos( s->m_Angle * DEG2RAD ) * dist;
+            s->m_Y += std::sin( s->m_Angle * DEG2RAD ) * dist;
+            
+        } else {
+            
+            s->m_X = Util::RandomNumber( 0, winWidth );
+            s->m_Y = Util::RandomNumber( -500, winHeight );
+            s->m_Angle = 0.0f;
+
+        }
+                
 		RandomizeStar( s );
 
-        m_pStars.push_back( s );
+        if( !m_bCreatedStarField )
+            m_pStars.push_back( s );
 
     }
 
+    m_bCreatedStarField = true;
+    
+    
 }
 
 void CTOFNContext::RandomizeStar( CStar * s )
@@ -840,6 +1038,8 @@ void CTOFNContext::RandomizeStar( CStar * s )
 	s->m_R = 1.0f;
 	s->m_G = 1.0f;
 	s->m_B = 1.0f;
+    s->m_A = ( float )Util::RandomNumber( 20, 180 ) / 255.0f;
+
 
 	if( c == 5 )
 	{
@@ -853,12 +1053,21 @@ void CTOFNContext::RandomizeStar( CStar * s )
 		s->m_R = 0.7f;
 		s->m_G = 0.7f;
 
-	}
+    } else if( m_bStarFieldUpgradeSelect && c < 17 ) {
+     
+        s->m_R = Util::RandomNumber( 100, 255 ) / 255.0f;
+        s->m_G = Util::RandomNumber( 100, 255 ) / 255.0f;
+        s->m_B = Util::RandomNumber( 100, 255 ) / 255.0f;
+        s->m_A = Util::RandomNumber( 120, 255 ) / 255.0f;
 
-	s->m_A = ( float )Util::RandomNumber( 20, 180 ) / 255.0f;
+        
+    }
 
 	s->m_Speed = Util::RandomNumber( 50, 200 );
 
+    if( m_bStarFieldUpgradeSelect )
+        s->m_Speed *= 2.0f;
+    
 }
 
 void CTOFNContext::AddEnemyToGenQueue( int i, float p ) {
@@ -987,16 +1196,45 @@ void CTOFNContext::DrawStarBackground()
         m_StarEngine.SetParticlePos( n, s->m_X, s->m_Y );
 
         //We'll update in the same loop to save some cpu cycles
-        s->m_Y += s->m_Speed * m_FrameDelta;
-
-        if( s->m_Y > 800.0f )
-        {
-
-            s->m_X = Util::RandomNumber( 0, width );
-            s->m_Y = Util::RandomNumber( -height, -5 );
-
-			RandomizeStar( s );
-
+        
+        if( m_bStarFieldUpgradeSelect ) {
+        
+            //s->m_Size += s->m_Speed * m_FrameDelta * .2f;
+            s->m_X += std::cos( s->m_Angle * DEG2RAD ) * s->m_Speed * m_FrameDelta;
+            s->m_Y += std::sin( s->m_Angle * DEG2RAD ) * s->m_Speed * m_FrameDelta;
+            
+        } else
+            s->m_Y += s->m_Speed * m_FrameDelta;
+        
+        
+        if( m_bStarFieldUpgradeSelect ) {
+         
+            if( s->m_Y > SCREEN_HEIGHT ||
+                s->m_X < 0.0f ||
+                s->m_X > SCREEN_WIDTH ||
+                s->m_Y < 0.0f )
+            {
+                
+                s->m_X = SCREEN_WIDTH * .5f;
+                s->m_Y = SCREEN_HEIGHT * .5f;
+                s->m_Angle = Util::RandomNumber( 0, 359 );
+                
+                RandomizeStar( s );
+                
+            }
+            
+        } else {
+         
+            if( s->m_Y > SCREEN_HEIGHT )
+            {
+                
+                s->m_X = Util::RandomNumber( 0, width );
+                s->m_Y = Util::RandomNumber( -height, -5 );
+                
+                RandomizeStar( s );
+                
+            }
+            
         }
 
 
