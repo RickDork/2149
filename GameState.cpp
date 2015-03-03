@@ -29,7 +29,7 @@ void CGameState::PostInit()
 
     m_pHUDFont = m_pGameContext->FontFactory()->GetFont( DEFAULT_FONT, 32 );
     
-    m_PixelMat = m_pGameContext->TextureFactory()->GetObjectContent( "pixel.png" );
+    m_PixelMat = GetTexture( "pixel.png" );
     
     m_NextSecondsFlash = SDL_GetTicks() + SECONDS_FLASH_TIME;
     m_DrawSeconds = true;
@@ -58,28 +58,32 @@ void CGameState::Input()
     static const float plyMoveSpeedX = 500.0f;
     static const float plyMoveSpeedY = 500.0f;
 
-    if( m_pPlayerEntity && m_pGameContext->PlayerInputEnabled() ) {
+    if( !m_pGameContext->IsGameFrozen() ) {
     
-        if( m_GameInput.KeyDown( SDL_SCANCODE_A ) )
-            m_pPlayerEntity->Displace( -1.0f * plyMoveSpeedX * m_pGameContext->GetFrameDelta(), 0.0f );
-
-        if( m_GameInput.KeyDown( SDL_SCANCODE_D ) )
-            m_pPlayerEntity->Displace( plyMoveSpeedX * m_pGameContext->GetFrameDelta(), 0.0f );
-
-        if( m_GameInput.KeyDown( SDL_SCANCODE_W ) )
-            m_pPlayerEntity->Displace( 0.0f, -1.0f * plyMoveSpeedY * m_pGameContext->GetFrameDelta() );
-
-        if( m_GameInput.KeyDown( SDL_SCANCODE_S ) )
-            m_pPlayerEntity->Displace( 0.0f, plyMoveSpeedY * m_pGameContext->GetFrameDelta() );
+    if( m_pPlayerEntity && m_pGameContext->PlayerInputEnabled() ) {
         
-        m_pPlayerEntity->FitIn( 0.0f, 0.0f, SCREEN_WIDTH - 50.0f, SCREEN_HEIGHT - 100.0f );
-        
-    } else if( !m_pPlayerEntity ) {
-     
-        if( m_GameInput.KeyDown( SDL_SCANCODE_RETURN ) ) {
+            if( m_GameInput.KeyDown( SDL_SCANCODE_A ) )
+                m_pPlayerEntity->Displace( -1.0f * plyMoveSpeedX * m_pGameContext->GetFrameDelta(), 0.0f );
+
+            if( m_GameInput.KeyDown( SDL_SCANCODE_D ) )
+                m_pPlayerEntity->Displace( plyMoveSpeedX * m_pGameContext->GetFrameDelta(), 0.0f );
+
+            if( m_GameInput.KeyDown( SDL_SCANCODE_W ) )
+                m_pPlayerEntity->Displace( 0.0f, -1.0f * plyMoveSpeedY * m_pGameContext->GetFrameDelta() );
+
+            if( m_GameInput.KeyDown( SDL_SCANCODE_S ) )
+                m_pPlayerEntity->Displace( 0.0f, plyMoveSpeedY * m_pGameContext->GetFrameDelta() );
             
-            m_pGameContext->IncrementRetryCount();
-            m_pGameContext->GameplayStart();
+            m_pPlayerEntity->FitIn( 0.0f, 0.0f, SCREEN_WIDTH - 50.0f, SCREEN_HEIGHT - 100.0f );
+            
+        } else if( !m_pPlayerEntity ) {
+         
+            if( m_GameInput.KeyDown( SDL_SCANCODE_RETURN ) ) {
+                
+                m_pGameContext->IncrementRetryCount();
+                m_pGameContext->GameplayStart();
+                
+            }
             
         }
         
@@ -114,45 +118,49 @@ void CGameState::Think()
 
         m_pGameContext->GameLogic();
 
-        m_pPlayerEntity = m_pGameContext->GetPlayerEntity();
-        
-        if( m_pPlayerEntity ) {
+        if( !m_pGameContext->IsGameFrozen() ) {
             
-            if( m_pPlayerEntity->CanShoot() && m_pGameContext->GetCurrentEnemyCount() > 0 )
-            {
+            m_pPlayerEntity = m_pGameContext->GetPlayerEntity();
+            
+            if( m_pPlayerEntity ) {
                 
-                if( m_pGameContext->HasUpgrade( 8 ) ) {
-                
-                    m_pGameContext->FireBulletFromGunAtAngle( 0, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  135.0f );
-                    m_pGameContext->FireBulletFromGunAtAngle( 1, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  45.0f );
+                if( m_pPlayerEntity->CanShoot() && m_pGameContext->GetCurrentEnemyCount() > 0 )
+                {
                     
-                    m_pGameContext->FireBulletFromGunAtAngle( 0, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  180.0f );
-                    m_pGameContext->FireBulletFromGunAtAngle( 1, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  0.0f );
+                    if( m_pGameContext->HasUpgrade( 8 ) ) {
                     
-                    m_pGameContext->FireBulletFromGunAtAngle( 0, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  -135.0f );
-                    m_pGameContext->FireBulletFromGunAtAngle( 1, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  -45.0f );
+                        m_pGameContext->FireBulletFromGunAtAngle( 0, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  135.0f );
+                        m_pGameContext->FireBulletFromGunAtAngle( 1, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  45.0f );
+                        
+                        m_pGameContext->FireBulletFromGunAtAngle( 0, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  180.0f );
+                        m_pGameContext->FireBulletFromGunAtAngle( 1, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  0.0f );
+                        
+                        m_pGameContext->FireBulletFromGunAtAngle( 0, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  -135.0f );
+                        m_pGameContext->FireBulletFromGunAtAngle( 1, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  -45.0f );
+                        
+                        m_pGameContext->FireBulletFromGunAtAngle( 0, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  270.0f );
+                        m_pGameContext->FireBulletFromGunAtAngle( 1, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  270.0f );
+                        
+                    } else if( m_pGameContext->HasUpgrade( 3 ) ) {
+                        
+                        m_pGameContext->FireBulletFromGunAtAngle( 0, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  135.0f );
+                        m_pGameContext->FireBulletFromGunAtAngle( 1, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  45.0f );
+                        
+                    }
                     
-                    m_pGameContext->FireBulletFromGunAtAngle( 0, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  270.0f );
-                    m_pGameContext->FireBulletFromGunAtAngle( 1, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  270.0f );
+                    m_pGameContext->FireBulletFrom( ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f );
                     
-                } else if( m_pGameContext->HasUpgrade( 3 ) ) {
+                    float speedmul = 1.0f;
                     
-                    m_pGameContext->FireBulletFromGunAtAngle( 0, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  135.0f );
-                    m_pGameContext->FireBulletFromGunAtAngle( 1, ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f,  45.0f );
+                    if( m_pGameContext->HasUpgrade( 9 ) )
+                        speedmul = .5f;
+                    
+                    m_pPlayerEntity->SetNextShotTime( SDL_GetTicks() + 200.0f * speedmul );
                     
                 }
-                
-                m_pGameContext->FireBulletFrom( ENTTYPE_PLYBULLET, m_pPlayerEntity, 500.0f );
-                
-                float speedmul = 1.0f;
-                
-                if( m_pGameContext->HasUpgrade( 9 ) )
-                    speedmul = .5f;
-                
-                m_pPlayerEntity->SetNextShotTime( SDL_GetTicks() + 200.0f * speedmul );
-                
-            }
 
+            }
+            
         }
         
     } else {

@@ -13,21 +13,22 @@ void CSelectUpgradeMenuState::Init()
     
     m_PlayerUpgrades.push_back( CPlayerUpgrade( 0, 0, "Fire from 3 guns instead of the regular 2, however your guns are weaker." ) );
     m_PlayerUpgrades.push_back( CPlayerUpgrade( 1, 0, "1.5x more health." ) );
-    m_PlayerUpgrades.push_back( CPlayerUpgrade( 2, 0, "Ship collisions take half the damage." ) );
+    m_PlayerUpgrades.push_back( CPlayerUpgrade( 2, 0, "Ship collisions do half the damage." ) );
     m_PlayerUpgrades.push_back( CPlayerUpgrade( 3, 2500, "2 more guns on your ship." ) );
     m_PlayerUpgrades.push_back( CPlayerUpgrade( 4, 2100, "2x more health." ) );
     m_PlayerUpgrades.push_back( CPlayerUpgrade( 5, 2000, "Health/EXP orbs are worth 1.5x more." ) );
-    m_PlayerUpgrades.push_back( CPlayerUpgrade( 6, 2000, "Ship collisions only take a quarter the damage." ) );
+    m_PlayerUpgrades.push_back( CPlayerUpgrade( 6, 2000, "Ship collisions only do a quarter the damage." ) );
     m_PlayerUpgrades.push_back( CPlayerUpgrade( 7, 1900, "Health/EXP orbs are worth 2.5x more." ) );
     m_PlayerUpgrades.push_back( CPlayerUpgrade( 8, 2200, "Your ship shoots in 8 directions." ) );
     m_PlayerUpgrades.push_back( CPlayerUpgrade( 9, 500, "Shoot twice as fast." ) );
+    m_PlayerUpgrades.push_back( CPlayerUpgrade( 10, 0, "Bullets do a quarter less damage" ) );
     
-    m_pFont = m_pGameContext->FontFactory()->GetFont( DEFAULT_FONT, 32 );
-    m_pTitleFont = m_pGameContext->FontFactory()->GetFont( DEFAULT_FONT, 72 );
+    m_pFont = GetFont( DEFAULT_FONT, 32 );
+    m_pTitleFont = GetFont( DEFAULT_FONT, 72 );
     
-    m_PixelMat = m_pGameContext->TextureFactory()->GetObjectContent( "pixel.png" );
-    m_KeyMat = m_pGameContext->TextureFactory()->GetObjectContent( "key.png" );
-    m_LongKeyMat = m_pGameContext->TextureFactory()->GetObjectContent( "longkey.png" );
+    m_PixelMat = GetTexture( "pixel.png" );
+    m_KeyMat = GetTexture( "key.png" );
+    m_LongKeyMat = GetTexture( "longkey.png" );
 
     m_bInit = true;
     

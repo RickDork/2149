@@ -2,6 +2,7 @@
 
 CLuaContext * gLuaContext = NULL;
 CTextureImage * gPixelImage = NULL;
+long int gTicksPad = 0;
 
 void SetLuaContext( CLuaContext * pLuaContext )
 {
@@ -153,7 +154,7 @@ LuaCallBackFunction( DrawString ) {
 
 LuaCallBackFunction( TicksElapsed ) {
  
-    lua_pushnumber( pLuaState, gLuaContext->TicksElapsed() );
+    lua_pushnumber( pLuaState, gLuaContext->TicksElapsed() + gTicksPad );
     
     return 1;
     
@@ -318,11 +319,49 @@ LuaCallBackFunction( SetDrawHUD ) {
     
 }
 
+LuaCallBackFunction( PadTicks ) {
+ 
+    int i = LNumber( 1 );
+    
+    gTicksPad = i;
+    
+    return 0;
+    
+}
+
+LuaCallBackFunction( GetTicks2 ) {
+ 
+    lua_pushnumber( pLuaState, SDL_GetTicks() + gTicksPad );
+    
+    return 1;
+    
+}
+
+LuaCallBackFunction( GetPlayerKillCount ) {
+ 
+    lua_pushnumber( pLuaState, gLuaContext->GetPlayerKillCount() );
+    
+    return 1;
+    
+}
+
+LuaCallBackFunction( ToggleGameFrozen ) {
+ 
+    bool b = LBoolean( 1 );
+    
+    gLuaContext->ToggleGameFrozen( b );
+    
+    return 0;
+    
+}
 
 void CTOFNLua::CreateLuaHooks()
 {
     
     LuaNameSpace( m_pLuaState, "ENGINE" );
+    
+    LuaFunctionRemove( m_pLuaState, GetTicks );
+    LuaFunctionWithName( m_pLuaState, GetTicks, GetTicks2 );
 
     LuaNameSpace( m_pLuaState, "Game" );
         LuaNameSpaceFunction( m_pLuaState, "Game", GenerateEnemy );
@@ -339,6 +378,9 @@ void CTOFNLua::CreateLuaHooks()
         LuaNameSpaceFunction( m_pLuaState, "Game", GetStringWidth );
         LuaNameSpaceFunction( m_pLuaState, "Game", MakeStringFit );
         LuaNameSpaceFunction( m_pLuaState, "Game", TogglePlayerInput );
+        LuaNameSpaceFunction( m_pLuaState, "Game", PadTicks );
+        LuaNameSpaceFunction( m_pLuaState, "Game", ToggleGameFrozen );
+        LuaNameSpaceFunction( m_pLuaState, "Game", GetPlayerKillCount );
     
     LuaNameSpace( m_pLuaState, "Draw" );
         LuaNameSpaceFunction( m_pLuaState, "Draw", DrawString );

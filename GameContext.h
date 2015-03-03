@@ -49,7 +49,10 @@ private:
     int m_RetryCount;
     int m_CurrentMission;
     int m_StartingEXP;
+    int m_PlayerKillCount;
     bool m_bMissionOver;
+    bool m_bGameFrozen;
+    float m_StarFieldSpeedMul;
 
     boost::ptr_vector< CStar > m_pStars;
     boost::ptr_vector< CParticleExplosion > m_pExplosions;
@@ -100,6 +103,29 @@ public:
     
     void NextMission();
     
+    void SetStarBackgroundSpeedMul( float m ) {
+     
+        m_StarFieldSpeedMul = m;
+        
+    }
+    
+    bool IsGameFrozen() {
+     
+        return m_bGameFrozen;
+        
+    }
+    
+    void ToggleGameFrozen( bool b ) {
+     
+        m_bGameFrozen = b;
+        
+        if( b )
+            FreezeTicksElapsed();
+        else
+            UnfreezeTicksElapsed();
+        
+    }
+    
     bool ShouldDrawHUD() {
      
         return m_bDrawHUD;
@@ -109,6 +135,12 @@ public:
     bool PlayerInputEnabled() {
      
         return m_bPlayerInput;
+        
+    }
+    
+    int GetPlayerKillCount() {
+     
+        return m_PlayerKillCount;
         
     }
     

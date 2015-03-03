@@ -5,7 +5,7 @@
 #include "CoreFoundation/CoreFoundation.h"
 #endif
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 1 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false )
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 1 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f )
 {
 
 }
@@ -71,30 +71,7 @@ void CTOFNContext::Initialize() {
     InitializeGraphics();
     InitializeData();
     
-    TextureFactory()->NewTexture( "player2.png" );
-    TextureFactory()->NewTexture("star.png");
-    TextureFactory()->NewTexture("ball.png");
-    TextureFactory()->NewTexture("pixel.png");
-    TextureFactory()->NewTexture("bullet.png");
-    TextureFactory()->NewTexture("Enemy.png");
-    TextureFactory()->NewTexture("Enemy2.png");
-    TextureFactory()->NewTexture("Enemy3.png");
-    TextureFactory()->NewTexture("Enemy4.png");
-    TextureFactory()->NewTexture("Enemy5.png");
-    TextureFactory()->NewTexture("Enemy6.png");
-    TextureFactory()->NewTexture("Enemy7.png");
-    TextureFactory()->NewTexture("orb.png");
-    TextureFactory()->NewTexture("orb2.png");
-    TextureFactory()->NewTexture("playerprofile.png");
-    TextureFactory()->NewTexture("aiprofile.png");
-    TextureFactory()->NewTexture("squadmateprofile.png");
-    TextureFactory()->NewTexture("key.png");
-    TextureFactory()->NewTexture("longkey.png");
-    
-    FontFactory()->NewFont( DEFAULT_FONT, 18 );
-    FontFactory()->NewFont( DEFAULT_FONT, 32 );
-    FontFactory()->NewFont( DEFAULT_FONT, 64 );
-    FontFactory()->NewFont( DEFAULT_FONT, 72 );
+    LoadResources( "files.res" );
     
 }
 
@@ -107,6 +84,7 @@ void CTOFNContext::GetCurrentSelectableUpgrades() {
         case 1:
             for( int i = 0; i < 3; i++ )
                 m_SelectableUpgrades.push_back( i );
+            m_SelectableUpgrades.push_back( 10 );
             break;
         case 2:
             for( int i = 3; i < 6; i++ )
@@ -138,6 +116,8 @@ void CTOFNContext::GameplayStart() {
     m_bGameTicksFrozen = false;
     m_GameTicksFreezeTime = SDL_GetTicks();
     m_bMissionOver = false;
+    m_bGameFrozen = false;
+    m_PlayerKillCount = 0;
     
     CreatePlayerEntity();
     SetGameStartTime( SDL_GetTicks() );
@@ -899,9 +879,14 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 
 			if( !playerBullet )
 			{
+                
+                float mul = 1.0f;
+                
+                if( HasUpgrade( 10 ) )
+                    mul = .75f;
 
                 entA->SetLastHurtTime( SDL_GetTicks() );
-                entA->Damage( bulletAI->GetDamage() );
+                entA->Damage( bulletAI->GetDamage() * mul );
                 m_pEntityManager->DeleteEntity( bulletEnt );
 
 
@@ -949,6 +934,10 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
                 entA->Damage( 20 );
             
             shipEnt->Damage( 30 );
+            
+            if( shipEnt->GetHealth() <= 0 )
+                m_PlayerKillCount++;
+            
 		}
 
 	} else if( bulletCollision )
@@ -963,6 +952,9 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
 
                 entA->Damage( bulletAI->GetDamage() );
                 m_pEntityManager->DeleteEntity( bulletEnt );
+                
+                if( entA->GetHealth() <= 0 )
+                    m_PlayerKillCount++;
 
                 return;
             
@@ -986,6 +978,7 @@ void CTOFNContext::CreateStarBackground()
     int winWidth, winHeight;
 
     m_pGraphicsContext->GetWindowSize( &winWidth, &winHeight );
+    m_StarFieldSpeedMul = 1.0f;
 
     for( int j = 0; j < MAX_STARS; j++ )
     {
@@ -1185,59 +1178,63 @@ void CTOFNContext::DrawStarBackground()
 
 	m_pGraphicsContext->GetWindowSize( &width, &height );
 
-    int n = 0;
-    for( ; n < MAX_STARS; n++ )
-    {
+    if( !m_bGameFrozen ) {
         
-        CStar * s = &m_pStars[n];
-        
-        m_StarEngine.SetParticleSize( n, s->m_Size, s->m_Size );
-        m_StarEngine.SetParticleColor( n, s->m_R, s->m_G, s->m_B, s->m_A );
-        m_StarEngine.SetParticlePos( n, s->m_X, s->m_Y );
+        int n = 0;
+        for( ; n < MAX_STARS; n++ )
+        {
+            
+            CStar * s = &m_pStars[n];
+            
+            m_StarEngine.SetParticleSize( n, s->m_Size, s->m_Size );
+            m_StarEngine.SetParticleColor( n, s->m_R, s->m_G, s->m_B, s->m_A );
+            m_StarEngine.SetParticlePos( n, s->m_X, s->m_Y );
 
-        //We'll update in the same loop to save some cpu cycles
-        
-        if( m_bStarFieldUpgradeSelect ) {
-        
-            //s->m_Size += s->m_Speed * m_FrameDelta * .2f;
-            s->m_X += std::cos( s->m_Angle * DEG2RAD ) * s->m_Speed * m_FrameDelta;
-            s->m_Y += std::sin( s->m_Angle * DEG2RAD ) * s->m_Speed * m_FrameDelta;
+            //We'll update in the same loop to save some cpu cycles
             
-        } else
-            s->m_Y += s->m_Speed * m_FrameDelta;
-        
-        
-        if( m_bStarFieldUpgradeSelect ) {
-         
-            if( s->m_Y > SCREEN_HEIGHT ||
-                s->m_X < 0.0f ||
-                s->m_X > SCREEN_WIDTH ||
-                s->m_Y < 0.0f )
-            {
+            if( m_bStarFieldUpgradeSelect ) {
+            
+                //s->m_Size += s->m_Speed * m_FrameDelta * .2f;
+                s->m_X += std::cos( s->m_Angle * DEG2RAD ) * s->m_Speed * m_FrameDelta * m_StarFieldSpeedMul;
+                s->m_Y += std::sin( s->m_Angle * DEG2RAD ) * s->m_Speed * m_FrameDelta * m_StarFieldSpeedMul;
                 
-                s->m_X = SCREEN_WIDTH * .5f;
-                s->m_Y = SCREEN_HEIGHT * .5f;
-                s->m_Angle = Util::RandomNumber( 0, 359 );
+            } else
+                s->m_Y += s->m_Speed * m_FrameDelta * m_StarFieldSpeedMul;
+            
+            
+            if( m_bStarFieldUpgradeSelect ) {
+             
+                if( s->m_Y > SCREEN_HEIGHT ||
+                    s->m_X < 0.0f ||
+                    s->m_X > SCREEN_WIDTH ||
+                    s->m_Y < 0.0f )
+                {
+                    
+                    s->m_X = SCREEN_WIDTH * .5f;
+                    s->m_Y = SCREEN_HEIGHT * .5f;
+                    s->m_Angle = Util::RandomNumber( 0, 359 );
+                    
+                    RandomizeStar( s );
+                    
+                }
                 
-                RandomizeStar( s );
+            } else {
+             
+                if( s->m_Y > SCREEN_HEIGHT )
+                {
+                    
+                    s->m_X = Util::RandomNumber( 0, width );
+                    s->m_Y = Util::RandomNumber( -height, -5 );
+                    
+                    RandomizeStar( s );
+                    
+                }
                 
             }
-            
-        } else {
-         
-            if( s->m_Y > SCREEN_HEIGHT )
-            {
-                
-                s->m_X = Util::RandomNumber( 0, width );
-                s->m_Y = Util::RandomNumber( -height, -5 );
-                
-                RandomizeStar( s );
-                
-            }
-            
+
+
         }
-
-
+    
     }
     
     m_StarEngine.BindVertexBuffers();
@@ -1296,14 +1293,18 @@ void CTOFNContext::UpdateExplosions() {
 void CTOFNContext::GameLogic()
 {
 
-    m_PhysicsWorld.Update();
-
-    UpdateAllEntities();
-
-    DoEnemyGenerator();
+    if( !m_bGameFrozen ) {
     
-    UpdateExplosions();
+        m_PhysicsWorld.Update();
+
+        UpdateAllEntities();
+
+        DoEnemyGenerator();
+        
+        UpdateExplosions();
     
+    }
+        
     if( m_pPlayerEntity )
         m_Lua.CallEngineFunction( "GameLogic" );
     

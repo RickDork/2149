@@ -51,9 +51,13 @@ CGame::CGame()
     
     CSelectUpgradeMenuState * pSelectUpgradeMenuState = new CSelectUpgradeMenuState;
     pSelectUpgradeMenuState->SetGameContext( &m_GameContext );
+    
+    CMainMenuState * pMainMenuState = new CMainMenuState;
+    pMainMenuState->SetGameContext( &m_GameContext );
 
     m_StateMachine.AddState( "GAME", ( CStateBase * )pGameState );
-    m_StateMachine.AddState( "UPGRADESELECT", ( CSelectUpgradeMenuState * )pSelectUpgradeMenuState, true );
+    m_StateMachine.AddState( "UPGRADESELECT", ( CSelectUpgradeMenuState * )pSelectUpgradeMenuState, false );
+    m_StateMachine.AddState( "MAINMENU", ( CMainMenuState * )pMainMenuState, true );
     
     Log::Debug( "State Machine initialized\nStarting main loop" );
 

@@ -32,6 +32,8 @@ public:
     virtual void NextMission() = 0;
     virtual void SetShouldDrawHUD( bool ) = 0;
     virtual void TogglePlayerInput( bool ) = 0;
+    virtual int GetPlayerKillCount() = 0;
+    virtual void ToggleGameFrozen( bool ) = 0;
     
 	CLuaContext() : CGameContext() { }
 	virtual ~CLuaContext() { }
