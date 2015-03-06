@@ -42,6 +42,9 @@ void CGameState::PostInit()
 
 void CGameState::OnStateSwitch() {
 
+    m_pGameContext->SetStarBackgroundSpeedMul( 1.0f );
+    m_pGameContext->ToggleStarFieldSlowFill( false );
+    m_pGameContext->SetUpgradeSelectMenuDelay( 0 );
     m_pGameContext->CreateStarBackground();
     
     m_pGameContext->GameplayStart();

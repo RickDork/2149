@@ -15,6 +15,7 @@ protected:
 
 public:
 
+    std::string GetEngineString( const char * );
     void CallEngineFunction( const char * );
 
 

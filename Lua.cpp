@@ -11,6 +11,11 @@ void SetLuaContext( CLuaContext * pLuaContext )
 
 }
 
+std::string CTOFNLua::GetEngineString( const char * v ) {
+ 
+    return GetLuaString( v, "ENGINE" );
+        
+}
 
 void CTOFNLua::CallEngineFunction( const char * f )
 {

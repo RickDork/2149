@@ -5,7 +5,7 @@
 #include "CoreFoundation/CoreFoundation.h"
 #endif
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 1 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f )
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 1 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 )
 {
 
 }
@@ -26,7 +26,7 @@ void CTOFNContext::InitializeLua()
     SetLuaContext( this );
     
     m_Lua.ReadFile( "scripts/main.lua" );
-
+    
 }
 
 
@@ -979,6 +979,7 @@ void CTOFNContext::CreateStarBackground()
 
     m_pGraphicsContext->GetWindowSize( &winWidth, &winHeight );
     m_StarFieldSpeedMul = 1.0f;
+    m_StarFieldSlowFillIndex = 0;
 
     for( int j = 0; j < MAX_STARS; j++ )
     {
@@ -996,10 +997,14 @@ void CTOFNContext::CreateStarBackground()
             s->m_Y = winHeight * .5f;
             s->m_Angle = Util::RandomNumber( 0, 359 );
             
-            float dist = Util::RandomNumber( 0, 600 );
-            
-            s->m_X += std::cos( s->m_Angle * DEG2RAD ) * dist;
-            s->m_Y += std::sin( s->m_Angle * DEG2RAD ) * dist;
+            if( !m_bStarFieldSlowFill ) {
+                
+                float dist = Util::RandomNumber( 0, 600 );
+                
+                s->m_X += std::cos( s->m_Angle * DEG2RAD ) * dist;
+                s->m_Y += std::sin( s->m_Angle * DEG2RAD ) * dist;
+                
+            }
             
         } else {
             
@@ -1010,11 +1015,17 @@ void CTOFNContext::CreateStarBackground()
         }
                 
 		RandomizeStar( s );
+        
+        if( m_bStarFieldSlowFill )
+            s->m_Speed = 0.0f;
 
         if( !m_bCreatedStarField )
             m_pStars.push_back( s );
 
     }
+    
+    if( m_bStarFieldSlowFill )
+        m_StarFieldSlowFillNextTime = SDL_GetTicks() + 1;
 
     m_bCreatedStarField = true;
     
@@ -1034,19 +1045,21 @@ void CTOFNContext::RandomizeStar( CStar * s )
     s->m_A = ( float )Util::RandomNumber( 20, 180 ) / 255.0f;
 
 
-	if( c == 5 )
+	if( c < 7 )
 	{
 
-		s->m_G = 0.7f;
-		s->m_B = 0.7f;
+        s->m_G = Util::RandomNumber( 160, 255 ) / 255.0f;
+        s->m_B = Util::RandomNumber( 160, 255 ) / 255.0f;
 
-	} else if( c == 12 )
+	} else if( c < 14 )
 	{
 
-		s->m_R = 0.7f;
-		s->m_G = 0.7f;
+        s->m_R = Util::RandomNumber( 160, 255 ) / 255.0f;
+        s->m_G = Util::RandomNumber( 160, 255 ) / 255.0f;
 
-    } else if( m_bStarFieldUpgradeSelect && c < 17 ) {
+    }
+    
+    if( m_bStarFieldUpgradeSelect && c < 17 ) {
      
         s->m_R = Util::RandomNumber( 100, 255 ) / 255.0f;
         s->m_G = Util::RandomNumber( 100, 255 ) / 255.0f;
@@ -1179,6 +1192,29 @@ void CTOFNContext::DrawStarBackground()
 	m_pGraphicsContext->GetWindowSize( &width, &height );
 
     if( !m_bGameFrozen ) {
+        
+        if( m_bStarFieldSlowFill ) {
+            
+            if( m_StarFieldSlowFillIndex < MAX_STARS ) {
+                
+                if( SDL_GetTicks() > m_StarFieldSlowFillNextTime ) {
+                 
+                    for( int j = 0; j < 3; j++ ) {
+                        if( m_StarFieldSlowFillIndex < MAX_STARS ) {
+                            
+                            CStar * s = &m_pStars[m_StarFieldSlowFillIndex++];
+                            s->m_Speed = Util::RandomNumber( 400, 600 );
+                            
+                        }
+                    }
+                    m_StarFieldSlowFillNextTime = SDL_GetTicks() + 1;
+                    
+                }
+                
+            }
+            
+        }
+
         
         int n = 0;
         for( ; n < MAX_STARS; n++ )

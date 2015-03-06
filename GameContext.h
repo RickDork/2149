@@ -17,7 +17,7 @@
 #include "OrbEntity.h"
 #include "OrbAI.h"
 
-#define MAX_STARS 1500
+#define MAX_STARS 2000
 
 class CEnemyGenQueue {
   
@@ -61,6 +61,10 @@ private:
     
     CInstancedParticleEngine m_StarEngine;
     bool m_bCreatedStarField, m_bStarFieldUpgradeSelect;
+    bool m_bStarFieldSlowFill;
+    int m_StarFieldSlowFillIndex;
+    long int m_StarFieldSlowFillNextTime;
+    int m_UpgradeSelectMenuDelay;
     //GLuint m_InstancedBuffer, m_InstancedRGBABuffer;
 
     CTOFNLua m_Lua;
@@ -158,12 +162,29 @@ public:
         
     }
     
+    void ToggleStarFieldSlowFill( bool b ) {
+     
+        m_bStarFieldSlowFill = b;
+        
+    }
+    
     void SetStarFieldComingAtYou( bool b ) {
      
         m_bStarFieldUpgradeSelect = b;
         
     }
     
+    void SetUpgradeSelectMenuDelay( int i ) {
+     
+        m_UpgradeSelectMenuDelay = i;
+        
+    }
+    
+    int GetUpgradeMenuSelectMenuDelay() {
+     
+        return m_UpgradeSelectMenuDelay;
+        
+    }
     
     void TogglePlayerInput( bool b ) {
      

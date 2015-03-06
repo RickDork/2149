@@ -13,7 +13,7 @@ CGame::CGame()
 
     m_GraphicsContext.SetDrawContext( &m_DrawContext );
     
-    m_GraphicsContext.CreateHandle( "2149", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, false );
+    m_GraphicsContext.CreateHandle( "2149", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, true );
     m_GraphicsContext.SetDrawMode( DrawMode::DRAW_MODE_2D );
     
     int shaderID = m_GraphicsContext.LoadShaderProgram( "vertex.v", "fragment.f" );
