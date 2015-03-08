@@ -13,7 +13,7 @@ CGame::CGame()
 
     m_GraphicsContext.SetDrawContext( &m_DrawContext );
     
-    m_GraphicsContext.CreateHandle( "2149", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, true );
+    m_GraphicsContext.CreateHandle( "2149", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, false );
     m_GraphicsContext.SetDrawMode( DrawMode::DRAW_MODE_2D );
     
     int shaderID = m_GraphicsContext.LoadShaderProgram( "vertex.v", "fragment.f" );
@@ -56,8 +56,10 @@ CGame::CGame()
     pMainMenuState->SetGameContext( &m_GameContext );
 
     m_StateMachine.AddState( "GAME", ( CStateBase * )pGameState );
-    m_StateMachine.AddState( "UPGRADESELECT", ( CSelectUpgradeMenuState * )pSelectUpgradeMenuState, false );
-    m_StateMachine.AddState( "MAINMENU", ( CMainMenuState * )pMainMenuState, true );
+    m_StateMachine.AddState( "UPGRADESELECT", ( CSelectUpgradeMenuState * )pSelectUpgradeMenuState );
+    m_StateMachine.AddState( "MAINMENU", ( CMainMenuState * )pMainMenuState);
+    
+    m_StateMachine.SetActiveState( "GAME" );
     
     Log::Debug( "State Machine initialized\nStarting main loop" );
 

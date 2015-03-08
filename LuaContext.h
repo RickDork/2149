@@ -17,6 +17,7 @@ public:
     virtual CShipEntity * CreateRandomEnemyEntity( int ) = 0;
     virtual int CreateEnemyFormation( bool, int, int ) = 0;
     virtual int CreateRandomEnemyFormation( bool ) = 0;
+    virtual CAIEntity * FireBulletFrom( int, float, float, float, float, float ) = 0;
     virtual CAIEntity * FireBulletFrom( int type, float x, float y, float dmg, float speed ) = 0;
     virtual void FireBulletFrom( int type, CShipEntity * pShip, float speed ) = 0;
     virtual void AddEnemyToGenQueue( int, float ) = 0;
@@ -34,6 +35,8 @@ public:
     virtual void TogglePlayerInput( bool ) = 0;
     virtual int GetPlayerKillCount() = 0;
     virtual void ToggleGameFrozen( bool ) = 0;
+    virtual void ToggleBossMode( bool ) = 0;
+    virtual void SetBossHealthPercent( float ) = 0;
     
 	CLuaContext() : CGameContext() { }
 	virtual ~CLuaContext() { }

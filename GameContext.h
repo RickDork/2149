@@ -53,6 +53,8 @@ private:
     bool m_bMissionOver;
     bool m_bGameFrozen;
     float m_StarFieldSpeedMul;
+    bool m_bBossMode;
+    float m_BossHealthPercent;
 
     boost::ptr_vector< CStar > m_pStars;
     boost::ptr_vector< CParticleExplosion > m_pExplosions;
@@ -130,6 +132,18 @@ public:
         
     }
     
+    float GetBossHealthPercent() {
+     
+        return m_BossHealthPercent;
+        
+    }
+    
+    void SetBossHealthPercent( float f ) {
+     
+        m_BossHealthPercent = f;
+        
+    }
+    
     bool ShouldDrawHUD() {
      
         return m_bDrawHUD;
@@ -145,6 +159,18 @@ public:
     int GetPlayerKillCount() {
      
         return m_PlayerKillCount;
+        
+    }
+    
+    bool GetBossMode() {
+     
+        return m_bBossMode;
+        
+    }
+    
+    void ToggleBossMode( bool b ) {
+     
+        m_bBossMode = b;
         
     }
     

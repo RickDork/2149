@@ -5,7 +5,7 @@
 #include "CoreFoundation/CoreFoundation.h"
 #endif
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 1 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 )
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 3 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f )
 {
 
 }
@@ -116,6 +116,7 @@ void CTOFNContext::GameplayStart() {
     m_bGameTicksFrozen = false;
     m_GameTicksFreezeTime = SDL_GetTicks();
     m_bMissionOver = false;
+    m_bBossMode = false;
     m_bGameFrozen = false;
     m_PlayerKillCount = 0;
     
@@ -372,7 +373,7 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, float dmg,
  
     float ang = 0.0f;
     
-    if( type == ENTTYPE_ENBULLET ) {
+    if( type == ENTTYPE_ENBULLET && m_pPlayerEntity && m_pPlayerEntity->IsActive() ) {
   
         ang = 270.0f;
         
@@ -428,7 +429,7 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, float dmg,
         g = Util::RandomNumber( 50, 150 );
         b = Util::RandomNumber( 50, 150 );
         
-        Vector2< float > p = m_pPlayerEntity->GetPos();
+        //Vector2< float > p = m_pPlayerEntity->GetPos();
         
         aic->SetAngle( angle );
         
@@ -681,6 +682,13 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float
         
     }
     
+    if( type == 9 ) {
+     
+        x = 0.0f;
+        y = -500.0f;
+        
+    }
+    
 	ent->SetContext( this );
     ent->SetClassTypeID( ENTTYPE_ENEMY );
     ent->SetClassType( "EN" );
@@ -690,6 +698,7 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float
     ent->DisablePhysicsMovement();
     ent->SetGravity( 0 );
 	ent->SetHealth( d.m_Health );
+    ent->SetMaxHealth( d.m_Health );
     ent->SetArmor( 0.0f );
     ent->SetPos( x, y );
     ent->SetDrawDepth( 1 );

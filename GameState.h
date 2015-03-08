@@ -28,6 +28,8 @@ private:
     
     long int m_GameTimer;
     
+    void DrawBullets();
+    
 public:
 
     CGameState();

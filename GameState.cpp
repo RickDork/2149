@@ -47,9 +47,21 @@ void CGameState::OnStateSwitch() {
     m_pGameContext->SetUpgradeSelectMenuDelay( 0 );
     m_pGameContext->CreateStarBackground();
     
+    m_pGameContext->GiveUpgrade( 0, 0 );
+    m_pGameContext->GiveUpgrade( 4, 0 );
+    m_pGameContext->GiveUpgrade( 7, 0 );
+    
+    
     m_pGameContext->GameplayStart();
     
+
+    
+
     m_pPlayerEntity = m_pGameContext->GetPlayerEntity();
+    
+    m_fboBullets.Clear();
+    m_fboBullets2.Clear();
+
     
 }
 
@@ -174,6 +186,39 @@ void CGameState::Think()
     
 }
 
+void CGameState::DrawBullets() {
+    
+    
+    m_fboBullets.BeginDrawingToFBO();
+    m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
+    m_pGameContext->EntityManager()->DrawAllEntitiesAtDepth( 0 );
+    m_fboBullets.EndDrawingToFBO();
+    
+    CMatrix< float > mat;
+    mat.Identity();
+    mat.Translate( 0.0f, SCREEN_HEIGHT, 0.0f);
+    
+    m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
+    m_fboBullets2.DrawTexture( m_pGameContext->DrawContext(), &mat );
+    
+    m_fboBullets2.BeginDrawingToFBO();
+    glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
+    glClear( GL_COLOR_BUFFER_BIT );
+    m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, .95f );
+    m_fboBullets.DrawTexture( m_pGameContext->DrawContext(), &mat );
+    m_fboBullets2.EndDrawingToFBO();
+    
+    
+    m_fboBullets.BeginDrawingToFBO();
+    glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
+    glClear( GL_COLOR_BUFFER_BIT );
+    m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
+    m_fboBullets2.DrawTexture( m_pGameContext->DrawContext(), &mat );
+    m_fboBullets.EndDrawingToFBO();
+
+    
+}
+
 void CGameState::Draw()
 {
 
@@ -181,35 +226,37 @@ void CGameState::Draw()
 
         m_pGameContext->DrawStarBackground();
 
+        if( m_pGameContext->GetBossMode() )
+            DrawBullets();
+    
         m_pGameContext->EntityManager()->DrawAllEntitiesAtDepth( 1 );
         m_pGameContext->EntityManager()->DrawAllEntitiesAtDepth( 2 );
     
-        m_fboBullets.BeginDrawingToFBO();
-            m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
-            m_pGameContext->EntityManager()->DrawAllEntitiesAtDepth( 0 );
-        m_fboBullets.EndDrawingToFBO();
-
-        CMatrix< float > mat;
-        mat.Identity();
-        mat.Translate( 0.0f, SCREEN_HEIGHT, 0.0f);
-
-        m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
-        m_fboBullets2.DrawTexture( m_pGameContext->DrawContext(), &mat );
-        
-        m_fboBullets2.BeginDrawingToFBO();
-            glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
-            glClear( GL_COLOR_BUFFER_BIT );
-            m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, .95f );
-            m_fboBullets.DrawTexture( m_pGameContext->DrawContext(), &mat );
-        m_fboBullets2.EndDrawingToFBO();
-
-
-        m_fboBullets.BeginDrawingToFBO();
-            glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
-            glClear( GL_COLOR_BUFFER_BIT );
-            m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
-            m_fboBullets2.DrawTexture( m_pGameContext->DrawContext(), &mat );
-        m_fboBullets.EndDrawingToFBO();
+    
+        if( !m_pGameContext->GetBossMode() )
+            DrawBullets();
+        else {
+         
+            float p = m_pGameContext->GetBossHealthPercent();
+            
+            int nbars = 20 * p;
+            
+            if( nbars < 1 && p > 0.0f )
+                nbars = 1;
+            
+            for( int j = 0; j < 20; j++ ) {
+             
+                float r = 1.0f, g = 0.0f, b = 0.0f;
+                
+                if( j >= nbars )
+                    r = .5f;
+                    
+               m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, 120.0f + j * 40.0f, 10.0f, 20.0f, 50.0f, r, g, b, 1.0f );
+                
+            }
+            
+        }
+    
 
   //  m_pGameContext->FontFactory()->GetFont( "font.ttf", 32 )->DrawString( m_pGameContext->DrawContext(), "Test\nTest", 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f );
     

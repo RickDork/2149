@@ -17,8 +17,10 @@ class CEnemyAI : public CTemplateAIController< CLuaContext >
 	float m_Speed;
     float m_FlyingAngle, m_FlyingAngleSpeed;
     bool m_bCrazyFlying;
-    
+    bool m_bBossModeEnable;
     int m_EnemyType;
+    
+    int m_BossShootType, m_BossCurGun, m_BossShootIter;
     
 public:
     
@@ -64,7 +66,7 @@ public:
         
     }
 
-	CEnemyAI() : CTemplateAIController(), m_Speed( 100.0f ), m_FlyingAngle( 0.0f ), m_bCrazyFlying( false ), m_FlyingAngleSpeed( 0.0f ), m_EnemyType( 0 ), m_bOnScreen( false )
+	CEnemyAI() : CTemplateAIController(), m_Speed( 100.0f ), m_FlyingAngle( 0.0f ), m_bCrazyFlying( false ), m_FlyingAngleSpeed( 0.0f ), m_EnemyType( 0 ), m_bOnScreen( false ), m_bBossModeEnable( false ), m_BossShootType( 0 ), m_BossCurGun( 0 )
 	{
     
         
