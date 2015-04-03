@@ -55,6 +55,8 @@ private:
     float m_StarFieldSpeedMul;
     bool m_bBossMode;
     float m_BossHealthPercent;
+    
+    CQuadTree qt;
 
     boost::ptr_vector< CStar > m_pStars;
     boost::ptr_vector< CParticleExplosion > m_pExplosions;
@@ -329,6 +331,8 @@ public:
 
     }
 
+    void DebugDrawQuadTree();
+    
     void GiveUpgrade( int, int );
     void RemoveUpgrade( int, int );
     bool HasUpgrade( int ); 

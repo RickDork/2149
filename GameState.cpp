@@ -54,14 +54,11 @@ void CGameState::OnStateSwitch() {
     
     m_pGameContext->GameplayStart();
     
-
-    
-
     m_pPlayerEntity = m_pGameContext->GetPlayerEntity();
     
     m_fboBullets.Clear();
     m_fboBullets2.Clear();
-
+    
     
 }
 
@@ -228,10 +225,10 @@ void CGameState::Draw()
 
         if( m_pGameContext->GetBossMode() )
             DrawBullets();
-    
+
         m_pGameContext->EntityManager()->DrawAllEntitiesAtDepth( 1 );
         m_pGameContext->EntityManager()->DrawAllEntitiesAtDepth( 2 );
-    
+
     
         if( !m_pGameContext->GetBossMode() )
             DrawBullets();
@@ -263,7 +260,7 @@ void CGameState::Draw()
    // m_pGameContext->DrawContext()->DrawGLTexture( texture, 0.0f, 10.0f, 20000.0f, 128.0f, 1.0f, 1.0f, 1.0f, 1.0f );
     
         m_pGameContext->DrawExplosions();
-    
+
         if( m_pGameContext->ShouldDrawHUD() ) {
         
             float heightmul = .5f;
@@ -275,6 +272,8 @@ void CGameState::Draw()
             hudStart.Set( 0.0f, SCREEN_HEIGHT - hudSize.GetY() );
         
             m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, hudStart.GetX(), hudStart.GetY(), hudSize.GetX(), hudSize.GetY(), 0.0f, 0.0f, 0.0f, 1.0f );
+            
+            m_pGameContext->DebugDrawQuadTree();
         
             if( m_pPlayerEntity ) {
             
@@ -313,6 +312,7 @@ void CGameState::Draw()
                     
                 }
             }
+
         
             char expstr[255];
             sprintf( expstr, "EXP: %d", m_pGameContext->GetPlayerEXP() );
@@ -349,9 +349,7 @@ void CGameState::Draw()
             m_pHUDFont->DrawString( m_pGameContext->DrawContext(), timestr, SCREEN_WIDTH * .5 - 50, SCREEN_HEIGHT - 50.0f, 1.0f, 1.0f, 1.0f, 1.0f );
             
         }
-    
         m_pGameContext->Lua().CallEngineFunction( "Draw" );
-    
     
 /*
         m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, 10.0f, 545.0f, 150.0f, 10.0f, 1.0f, 1.0f, 1.0f, 0.5f );

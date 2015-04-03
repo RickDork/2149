@@ -5,8 +5,10 @@
 #include "CoreFoundation/CoreFoundation.h"
 #endif
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 3 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f )
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 1 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f )
 {
+    
+    qt.Init( -1000, -1000, 2000 );
 
 }
 
@@ -282,7 +284,9 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
     m_pPlayerEntity = ent;
 
     m_pEntityManager->AddEntity( m_pPlayerEntity );
+    qt.AddEntity( m_pPlayerEntity );
 
+    
 	Log::Debug( "Created player entity" );
 
     return m_pPlayerEntity;
@@ -729,7 +733,8 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float
 
     aic->SetTargetEntity( ent );
     ent->SetAIController( aic );
-
+    qt.AddEntity( ent );
+    
     m_pEntityManager->AddEntity( ent );
     m_pEntityManager->TrackEntity( "EN", ent );
 
@@ -739,12 +744,7 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float
 
 void CTOFNContext::DoEnemyGenerator()
 {
-    
-    if( SDL_GetTicks() < m_NextEnemySpawn )
-        return;
-    
-    if( m_EnemyGenQueue.size() == 0 )
-        return;
+
 
     int n = ( m_MaxEnemyCount - m_CurEnemyCount );
     for( int j = 0; j < n; j++ )
@@ -768,7 +768,10 @@ void CTOFNContext::DoEnemyGenerator()
             j += CreateRandomEnemyFormation( true ) - 1;
 
     }
-
+    
+    std::vector< CNodeList > lln;
+    
+    qt.GetObjectsInLayer( lln, 4 );
     
 
 }
@@ -1293,6 +1296,15 @@ void CTOFNContext::DrawStarBackground()
     
     m_pDrawContext->Bind2DVertexBuffer();
 
+}
+
+void CTOFNContext::DebugDrawQuadTree() {
+ 
+    qt.Think();
+    
+    m_pDrawContext->SetTexture( GetTexture( "pixel.png" )->GetFrame( 0 ).GetTexture() );
+    qt.Draw( m_pGraphicsContext->GetDrawContext() );
+    
 }
 
 void CTOFNContext::DrawExplosions() {
