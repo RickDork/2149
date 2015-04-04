@@ -8,7 +8,7 @@
 CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 1 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f )
 {
     
-    qt.Init( -1000, -1000, 2000 );
+    m_QuadTree.Init( 0, -100, 1200 );
 
 }
 
@@ -17,7 +17,7 @@ void CTOFNContext::InitializePhysicsWorld()
 
     m_PhysicsWorld.Initialize( 0.0f, 0.0f );
     m_CollisionCallback.SetContext( this );
-    m_PhysicsWorld.SetContactListener( &m_CollisionCallback );
+   // m_PhysicsWorld.SetContactListener( &m_CollisionCallback );
 
 }
 
@@ -275,6 +275,10 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
     ent->AddGun( .3f, .23f, gunDmg );
 	ent->AddGun( .7f, .23f, gunDmg );
 
+    CBoxCollisionBody * colBody = new CBoxCollisionBody;
+    colBody->SetBox( 0.0f, 0.0f, 64.0f, 64.0f );
+    ent->SetCollisionBody( colBody );
+    
     if( HasUpgrade( 0 ) )
         ent->AddGun( .5f, .1f, gunDmg );
     
@@ -284,7 +288,7 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
     m_pPlayerEntity = ent;
 
     m_pEntityManager->AddEntity( m_pPlayerEntity );
-    qt.AddEntity( m_pPlayerEntity );
+    m_QuadTree.AddEntity( m_pPlayerEntity );
 
     
 	Log::Debug( "Created player entity" );
@@ -368,6 +372,7 @@ CParticleExplosion * CTOFNContext::CreateExplosion( int type, float x, float y )
     
     p->SetExplosionEntity( ent );
     m_pEntityManager->QueueEntity( ent );
+    m_QuadTree.AddEntity( ent );
     
     return p;
 
@@ -466,14 +471,22 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, float dmg,
     ent->SetScale( sx, sy );
     ent->SetColor( r / 255.0f, g / 255.0f, b / 255.0f, 1.0f );
 
+    CBoxCollisionBody * colBody = new CBoxCollisionBody;
+    colBody->SetBox( 0.0f, 0.0f, 5.0f, 5.0f );
+    
+    ent->SetCollisionBody( colBody );
+    
     aic->SetTargetEntity( ent );
     ent->SetAIController( aic );
     
     if( bIter )
         bulletvec.push_back( ent );
-    else
-    m_pEntityManager->AddEntity( ent );
-
+    else {
+        
+        m_pEntityManager->AddEntity( ent );
+        m_QuadTree.AddEntity( ent );
+    }
+    
     return ent;
 
 }
@@ -710,6 +723,10 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float
 
     aic->SetEntityContext( this );
     
+    CBoxCollisionBody * colBody = new CBoxCollisionBody;
+    colBody->SetBox( 0.0f, 0.0f, d.m_CollisionBoxWidth, d.m_CollisionBoxHeight );
+    ent->SetCollisionBody( colBody );
+    
     if( type != 5 && type != 7 )
         aic->SetSpeed( speed );
     else {
@@ -733,7 +750,8 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float
 
     aic->SetTargetEntity( ent );
     ent->SetAIController( aic );
-    qt.AddEntity( ent );
+    
+    m_QuadTree.AddEntity( ent );
     
     m_pEntityManager->AddEntity( ent );
     m_pEntityManager->TrackEntity( "EN", ent );
@@ -769,10 +787,6 @@ void CTOFNContext::DoEnemyGenerator()
 
     }
     
-    std::vector< CNodeList > lln;
-    
-    qt.GetObjectsInLayer( lln, 4 );
-    
 
 }
 
@@ -799,10 +813,16 @@ COrbEntity * CTOFNContext::CreateOrb( int type, float x, float y ) {
     ent->SetPos( x, y );
     ent->SetType( type );
     
+    CBoxCollisionBody * colBody = new CBoxCollisionBody;
+    colBody->SetBox( 0.0f, 0.0f, 20.0f, 20.0f );
+    
+    ent->SetCollisionBody( colBody );
+    
     aic->SetTargetEntity( ent );
     ent->SetAIController( aic );
     
     m_pEntityManager->QueueEntity( ent );
+    m_QuadTree.AddEntity( ent );
     
     return ent;
     
@@ -1186,6 +1206,7 @@ void CTOFNContext::UpdateAllEntities()
     bIter = false;
     for( int j = 0; j < bulletvec.size(); j++ ) {
      
+        m_QuadTree.AddEntity( ( CWorldEntity * )bulletvec[j] );
         m_pEntityManager->AddEntity( bulletvec[j] );
         
     }
@@ -1299,11 +1320,9 @@ void CTOFNContext::DrawStarBackground()
 }
 
 void CTOFNContext::DebugDrawQuadTree() {
- 
-    qt.Think();
     
     m_pDrawContext->SetTexture( GetTexture( "pixel.png" )->GetFrame( 0 ).GetTexture() );
-    qt.Draw( m_pGraphicsContext->GetDrawContext() );
+    m_QuadTree.Draw( m_pGraphicsContext->GetDrawContext() );
     
 }
 
@@ -1352,7 +1371,9 @@ void CTOFNContext::GameLogic()
 
     if( !m_bGameFrozen ) {
     
-        m_PhysicsWorld.Update();
+     //   m_PhysicsWorld.Update();
+        
+        m_CollisionEngine.CheckForQuadTreeCollisions( &m_QuadTree, &m_CollisionCallback );
 
         UpdateAllEntities();
 
@@ -1361,6 +1382,8 @@ void CTOFNContext::GameLogic()
         UpdateExplosions();
     
     }
+    
+    m_QuadTree.Think();
         
     if( m_pPlayerEntity )
         m_Lua.CallEngineFunction( "GameLogic" );

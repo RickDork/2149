@@ -56,13 +56,14 @@ private:
     bool m_bBossMode;
     float m_BossHealthPercent;
     
-    CQuadTree qt;
+    CQuadTree m_QuadTree;
 
     boost::ptr_vector< CStar > m_pStars;
     boost::ptr_vector< CParticleExplosion > m_pExplosions;
     
     std::vector< int > m_Upgrades;
     
+    CCollisionEngine m_CollisionEngine;
     CInstancedParticleEngine m_StarEngine;
     bool m_bCreatedStarField, m_bStarFieldUpgradeSelect;
     bool m_bStarFieldSlowFill;

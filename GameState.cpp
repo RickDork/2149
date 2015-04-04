@@ -273,7 +273,7 @@ void CGameState::Draw()
         
             m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, hudStart.GetX(), hudStart.GetY(), hudSize.GetX(), hudSize.GetY(), 0.0f, 0.0f, 0.0f, 1.0f );
             
-            m_pGameContext->DebugDrawQuadTree();
+          //  m_pGameContext->DebugDrawQuadTree();
         
             if( m_pPlayerEntity ) {
             

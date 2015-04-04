@@ -1,21 +1,20 @@
 #ifndef COLLISIONCALLBACK_H_
 #define COLLISIONCALLBACK_H_
 
-#include <Box2D/Box2D.h>
 #include "SoraIncludes.h"
 #include "ShipEntity.h"
 #include "Entity.h"
 
-class CCollisionCallback : public b2ContactListener
+class CCollisionCallback : public CCollisionListener
 {
-
-    void BeginContact( b2Contact * );
-    void EndContact( b2Contact * );
 
     CEntityContext * m_pContext;
 
 public:
 
+    void BeginContact( CCollisionContact & );
+
+    
     void SetContext( CEntityContext * pContext )
     {
 
@@ -23,7 +22,7 @@ public:
 
     }
 
-    CCollisionCallback() : b2ContactListener(), m_pContext( NULL )
+    CCollisionCallback() : CCollisionListener(), m_pContext( NULL )
     {
 
 

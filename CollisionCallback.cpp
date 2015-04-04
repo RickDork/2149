@@ -1,10 +1,10 @@
 #include "CollisionCallback.h"
 
-void CCollisionCallback::BeginContact( b2Contact * contact )
+void CCollisionCallback::BeginContact( CCollisionContact & pCollisionContact )
 {
 
-    CEntity * entityA = static_cast< CEntity * >( contact->GetFixtureA()->GetBody()->GetUserData() );
-    CEntity * entityB = static_cast< CEntity * >( contact->GetFixtureB()->GetBody()->GetUserData() );
+    CEntity * entityA = static_cast< CEntity * >( pCollisionContact.GetObjectA() );
+    CEntity * entityB = static_cast< CEntity * >( pCollisionContact.GetObjectB() );
 
     CEntity * entities[] = { entityA, entityB };
 
@@ -50,9 +50,3 @@ void CCollisionCallback::BeginContact( b2Contact * contact )
 
 }
 
-void CCollisionCallback::EndContact( b2Contact * contact )
-{
-
-
-
-}
