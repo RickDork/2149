@@ -360,6 +360,36 @@ LuaCallBackFunction( ToggleGameFrozen ) {
     
 }
 
+LuaCallBackFunction( ToggleScene ) {
+ 
+    bool b = LBoolean( 1 );
+    
+    gLuaContext->ToggleScene( b );
+    
+    return 0;
+    
+}
+
+LuaCallBackFunction( CreateExplosions ) {
+ 
+    int c = LNumber( 1 );
+    float x = LNumber( 2 );
+    float y = LNumber( 3 );
+    
+    gLuaContext->CreateExplosionsAndSmoke( c, -1, x, y );
+    
+    return 0;
+    
+}
+
+LuaCallBackFunction( FunkyBackground ) {
+ 
+    gLuaContext->DrawFunkyBackground();
+    
+    return 0;
+    
+}
+
 void CTOFNLua::CreateLuaHooks()
 {
     
@@ -386,11 +416,14 @@ void CTOFNLua::CreateLuaHooks()
         LuaNameSpaceFunction( m_pLuaState, "Game", PadTicks );
         LuaNameSpaceFunction( m_pLuaState, "Game", ToggleGameFrozen );
         LuaNameSpaceFunction( m_pLuaState, "Game", GetPlayerKillCount );
+        LuaNameSpaceFunction( m_pLuaState, "Game", ToggleScene );
+        LuaNameSpaceFunction( m_pLuaState, "Game", CreateExplosions );
     
     LuaNameSpace( m_pLuaState, "Draw" );
         LuaNameSpaceFunction( m_pLuaState, "Draw", DrawString );
         LuaNameSpaceFunction( m_pLuaState, "Draw", DrawTexture );
         LuaNameSpaceFunction( m_pLuaState, "Draw", SetDrawHUD );
+        LuaNameSpaceFunction( m_pLuaState, "Draw", FunkyBackground );
     
     LuaFunction( m_pLuaState, TicksElapsed );
     LuaFunction( m_pLuaState, FreezeGameTicks );

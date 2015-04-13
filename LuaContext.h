@@ -37,6 +37,10 @@ public:
     virtual void ToggleGameFrozen( bool ) = 0;
     virtual void ToggleBossMode( bool ) = 0;
     virtual void SetBossHealthPercent( float ) = 0;
+    virtual void SetBossHealth( float ) = 0;
+    virtual void ToggleScene( bool ) = 0;
+    virtual void CreateExplosionsAndSmoke( int, int, float, float ) = 0;
+    virtual void DrawFunkyBackground() = 0;
     
 	CLuaContext() : CGameContext() { }
 	virtual ~CLuaContext() { }

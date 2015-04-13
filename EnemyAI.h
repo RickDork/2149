@@ -7,6 +7,8 @@
 #include "Util.h"
 #include "Define.h"
 
+#define BOSS_BLT_DMG 5.0f
+
 class CEnemyAI : public CTemplateAIController< CLuaContext >
 {
     

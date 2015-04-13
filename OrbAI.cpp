@@ -64,7 +64,7 @@ void COrbAI::Think() {
     
     m_Alpha -= 75.0f * p->GetFrameDelta();
     
-    if( m_Alpha <= 0.0f ) {
+    if( ( int )m_Alpha <= 1 ) {
      
         m_Alpha = 0.0f;
         

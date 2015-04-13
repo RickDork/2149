@@ -5,7 +5,8 @@
 #include "CoreFoundation/CoreFoundation.h"
 #endif
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 1 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f )
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 3 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f ),
+    m_bCutScene( false ), m_BossHealth( 0.0f ), m_bPlayerInvincible( false )
 {
     
     m_QuadTree.Init( 0, -100, 1200 );
@@ -35,14 +36,21 @@ void CTOFNContext::InitializeLua()
 void CTOFNContext::InitializeGraphics()
 {
 
-    int id = m_pGraphicsContext->LoadShaderProgram( "star.v", "star.f" );
+    m_pGraphicsContext->LoadShaderProgram( "star.v", "star.f" );
+    m_pGraphicsContext->LoadShaderProgram( "bullet.v", "bullet.f" );
+    m_pGraphicsContext->LoadShaderProgram( "funkybullet.v", "funkybullet.f" );
+    m_pGraphicsContext->LoadShaderProgram( "explosion.v", "explosion.f" );
+    m_pGraphicsContext->LoadShaderProgram( "vertex.v", "noiseimage.f" );
+    m_pGraphicsContext->LoadShaderProgram( "funkybg.v", "funkybg.f" );
+
+    
     int width, height;
 
      m_pGraphicsContext->GetWindowSize( &width, &height );
     
     m_StarEngine.Init( MAX_STARS, 1 );
 
-    for( int j = 1; j >= 0; j-- )
+    for( int j = 6; j >= 0; j-- )
     {
 
         int id = m_pGraphicsContext->GetShaderIDFromIndex( j );
@@ -106,6 +114,7 @@ void CTOFNContext::GameplayStart() {
     m_pEntityManager->RemoveAllDeletedEntities();
     m_pEntityManager->RemoveAllEntities();
     
+    m_pSmokePlumes.clear();
     m_pExplosions.clear();
     
     m_pPlayerEntity = NULL;
@@ -120,6 +129,7 @@ void CTOFNContext::GameplayStart() {
     m_bMissionOver = false;
     m_bBossMode = false;
     m_bGameFrozen = false;
+    m_bPlayerInvincible = false;
     m_PlayerKillCount = 0;
     
     CreatePlayerEntity();
@@ -261,11 +271,11 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
     CShipEntity * ent = new CShipEntity;
 	ent->SetContext( this );
     ent->SetClassTypeID( ENTTYPE_PLAYER );
-	ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 64, 64 );
+	//ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 64, 64 );
     ent->SetMaterial( m_pTextureFactory->GetObjectContent( "player2.png" ) );
 	ent->SetSize( 80, 80 );
-    ent->DisablePhysicsMovement();
-    ent->SetGravity( 0 );
+    //ent->DisablePhysicsMovement();
+    //ent->SetGravity( 0 );
     ent->SetPos( defaultPlayerPosX, defaultPlayerPosY );
     ent->SetDrawDepth( 1 );
     ent->SetHealth( health );
@@ -276,7 +286,7 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
 	ent->AddGun( .7f, .23f, gunDmg );
 
     CBoxCollisionBody * colBody = new CBoxCollisionBody;
-    colBody->SetBox( 0.0f, 0.0f, 64.0f, 64.0f );
+    colBody->FitFromCenter( 80.0f, 80.0f, 64.0f, 64.0f );
     ent->SetCollisionBody( colBody );
     
     if( HasUpgrade( 0 ) )
@@ -338,6 +348,49 @@ void CTOFNContext::FireBulletFrom( int type, CShipEntity * pShip, float speed )
 
 }
 
+
+
+CSmokePlume * CTOFNContext::CreateSmokePlume( float x, float y )
+{
+    
+    
+    CSmokePlume * s = new CSmokePlume;
+    //p->SetIsSmoke( true );
+    s->Init( x, y );
+    m_pSmokePlumes.push_back( s );
+
+    return s;
+    
+}
+
+void CTOFNContext::CreateExplosionsAndSmoke( int count, int type, float x, float y ) {
+    
+    for( int j = 0; j < count; j++ ) {
+     
+        float tx = 0.0f, ty = 0.0f;
+        
+        if( j > 0 ) {
+            
+            tx = Util::RandomNumber( -50, 50 );
+            ty = Util::RandomNumber( -50, 50 );
+            
+        }
+        
+        CreateExplosion( type, x + tx, y + ty);
+        CreateSmokePlume( x + tx * .8f, y + ty * .8f );
+        
+    }
+    
+}
+
+void CTOFNContext::CreateExplosionsAndSmoke( int type, float x, float y ) {
+    
+    int count = Util::RandomNumber( 2, 4 );
+    
+    CreateExplosionsAndSmoke( count, type, x, y );
+    
+}
+
 CParticleExplosion * CTOFNContext::CreateExplosion( int type, float x, float y )
 {
     
@@ -345,14 +398,23 @@ CParticleExplosion * CTOFNContext::CreateExplosion( int type, float x, float y )
     float size = 60.0f;
     bool mega = false;
     
-    if( Util::RandomNumber( 1, 10 ) == 2 ) {
-     
-        range = 4000.0f;
-        size = 120.0f;
-        mega = true;
+    if( type > -1 ) {
+    
+        if( Util::RandomNumber( 1, 10 ) == 2 ) {
+         
+            range = 4000.0f;
+            size = 120.0f;
+            mega = true;
+        }
+        
+    } else {
+    
+        type = 0;
         
     }
-    
+
+        
+        
     CParticleExplosion * p = new CParticleExplosion;
     p->Init( ( mega ) ? 2 : 1, range, x, y );
     m_pExplosions.push_back( p );
@@ -368,7 +430,11 @@ CParticleExplosion * CTOFNContext::CreateExplosion( int type, float x, float y )
         ent->SetClassType( "XPL" );
 
     ent->SetPos( x - size * .5f, y - size * .5f );
-    ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), size, size );
+    //ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), size, size );
+    
+    CBoxCollisionBody * colBody = new CBoxCollisionBody;
+    colBody->SetBox( 0.0f, 0.0f, size, size );
+    ent->SetCollisionBody( colBody );
     
     p->SetExplosionEntity( ent );
     m_pEntityManager->QueueEntity( ent );
@@ -463,10 +529,10 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, float dmg,
 	ent->SetContext( this );
     ent->SetClassTypeID( type );
     ent->SetClassType( "BLT" );
-	ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 5, 5 );
+	//ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 5, 5 );
     ent->SetMaterial( m_pTextureFactory->GetObjectContent( sprite ) );
-    ent->DisablePhysicsMovement();
-    ent->SetGravity( 0 );
+    //ent->DisablePhysicsMovement();
+    //ent->SetGravity( 0 );
     ent->SetPos( x, y );
     ent->SetScale( sx, sy );
     ent->SetColor( r / 255.0f, g / 255.0f, b / 255.0f, 1.0f );
@@ -709,11 +775,11 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float
 	ent->SetContext( this );
     ent->SetClassTypeID( ENTTYPE_ENEMY );
     ent->SetClassType( "EN" );
-    ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), d.m_CollisionBoxWidth, d.m_CollisionBoxHeight );
+  //  ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), d.m_CollisionBoxWidth, d.m_CollisionBoxHeight );
     ent->SetMaterial( m_pTextureFactory->GetObjectContent( d.m_Sprite ) );
 	ent->SetSize( d.m_Width, d.m_Height );
-    ent->DisablePhysicsMovement();
-    ent->SetGravity( 0 );
+    //ent->DisablePhysicsMovement();
+    //ent->SetGravity( 0 );
 	ent->SetHealth( d.m_Health );
     ent->SetMaxHealth( d.m_Health );
     ent->SetArmor( 0.0f );
@@ -724,7 +790,7 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float
     aic->SetEntityContext( this );
     
     CBoxCollisionBody * colBody = new CBoxCollisionBody;
-    colBody->SetBox( 0.0f, 0.0f, d.m_CollisionBoxWidth, d.m_CollisionBoxHeight );
+    colBody->FitFromCenter( d.m_Width, d.m_Height, d.m_CollisionBoxWidth, d.m_CollisionBoxHeight );
     ent->SetCollisionBody( colBody );
     
     if( type != 5 && type != 7 )
@@ -762,7 +828,10 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float
 
 void CTOFNContext::DoEnemyGenerator()
 {
-
+    
+    
+    if( m_EnemyGenQueue.size() < 1 )
+        return;
 
     int n = ( m_MaxEnemyCount - m_CurEnemyCount );
     for( int j = 0; j < n; j++ )
@@ -790,6 +859,49 @@ void CTOFNContext::DoEnemyGenerator()
 
 }
 
+void CTOFNContext::AddPlayerPopupText( std::string text, float x, float y, float r, float g, float b ) {
+ 
+    CTextPopup * t = new CTextPopup;
+    t->SetText( text );
+    t->SetPos( x, y );
+    t->SetColor( r, g, b, 255.0f );
+    t->SetFadeSpeed( 255.0f );
+    t->SetFont( m_pFontFactory->GetFont( DEFAULT_FONT, 24 ) );
+    m_pTextPopups.push_back( t );
+    
+}
+
+void CTOFNContext::UpdateTextPopups() {
+ 
+    boost::ptr_vector< CTextPopup >::iterator iter = m_pTextPopups.begin();
+    
+    for( ; iter != m_pTextPopups.end(); ) {
+     
+        if( ( *iter ).KillMe() )
+            iter = m_pTextPopups.erase( iter );
+        else {
+            
+            ( *iter ).Think( GetFrameDelta() );
+            iter++;
+            
+        }
+        
+    }
+    
+}
+
+void CTOFNContext::DrawTextPopups() {
+
+    boost::ptr_vector< CTextPopup >::iterator iter = m_pTextPopups.begin();
+    
+    for( ; iter != m_pTextPopups.end(); iter++ ) {
+        
+        ( *iter ).Draw( m_pDrawContext );
+        
+    }
+    
+}
+
 COrbEntity * CTOFNContext::CreateOrb( int type, float x, float y ) {
  
     COrbEntity * ent = new COrbEntity;
@@ -805,11 +917,11 @@ COrbEntity * CTOFNContext::CreateOrb( int type, float x, float y ) {
     CTextureImage * m = m_pTextureFactory->GetObjectContent( orbspr );
     ent->SetClassTypeID( ENTTYPE_ORB );
     ent->SetDrawDepth( 2 );
-    ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 20.0f, 20.0f );
+    //ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 20.0f, 20.0f );
     ent->SetMaterial( m);
     ent->SetSize( 15, 15 );
-    ent->DisablePhysicsMovement();
-    ent->SetGravity( 0 );
+    //ent->DisablePhysicsMovement();
+    //ent->SetGravity( 0 );
     ent->SetPos( x, y );
     ent->SetType( type );
     
@@ -846,8 +958,8 @@ void CTOFNContext::DestroyShip( CShipEntity * e, bool quiet )
 
         const Vector2< float > & pos = e->GetPos();
         Vector2< int > size = e->GetSize();
-        
-        CreateExplosion( 0, pos.GetX() + ( float )size.GetX() * .5f, pos.GetY() + ( float )size.GetY() * .5f );
+
+        CreateExplosionsAndSmoke( 0, pos.GetX() + ( float )size.GetX() * .5f, pos.GetY() + ( float )size.GetY() * .5f );
 
     }
 
@@ -927,7 +1039,7 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
         } else if( explosionCollision ) {
             
             entA->SetLastHurtTime( SDL_GetTicks() );
-            entA->Damage( 5 );
+            entA->Damage( 1 );
             
         } else if( entTypeB & ENTTYPE_POWERUP )
 		{
@@ -945,11 +1057,33 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
                 mul = 2.5f;
             else if( HasUpgrade( 5 ) )
                 mul = 1.5f;
+        
+            if( t == 0 ) {
+                
+                float hp  = 7.0f * mul;
+                entA->Heal( hp );
+                
+                char s[3];
+                
+                sprintf( s, "%d", ( int )hp );
+                
+                AddPlayerPopupText( std::string( s ), orbEnt->GetPos().GetX(), orbEnt->GetPos().GetY(), 128.0f, 255.0f, 128.0f );
+                
+                
+                
+            } else {
+                
+                int exp = Util::RandomNumber( 5, 12 ) * mul;
+                m_PlayerEXP += exp;
+                
+                char s[3];
+                
+                sprintf( s, "%d", exp );
+                
+                AddPlayerPopupText( std::string( s ), orbEnt->GetPos().GetX(), orbEnt->GetPos().GetY(), 19.0f, 212.0f, 233.0f );
+
             
-            if( t == 0 )
-                entA->Heal( 3.0f * mul );
-            else
-                m_PlayerEXP += Util::RandomNumber( 5, 12 ) * mul;
+            }
             
             m_pEntityManager->DeleteEntity( orbEnt );
             
@@ -959,16 +1093,20 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
             entA->SetLastHurtTime( SDL_GetTicks() );
             
             if( HasUpgrade( 6 ) )
-                entA->Damage( 5 );
+                entA->Damage( 2 );
             else if( HasUpgrade( 2 ) )
-                entA->Damage( 10 );
+                entA->Damage( 5 );
             else
-                entA->Damage( 20 );
+                entA->Damage( 10 );
             
-            shipEnt->Damage( 30 );
+            if( shipEnt->GetShipType() != 9 ) {
+                
+                shipEnt->Damage( 30 );
+                
+                if( shipEnt->GetHealth() <= 0 )
+                    m_PlayerKillCount++;
             
-            if( shipEnt->GetHealth() <= 0 )
-                m_PlayerKillCount++;
+            }
             
 		}
 
@@ -997,8 +1135,8 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
     } else if( explosionCollision ) {
      
         if( explosionEnt->GetClassType() == "XPL" )
-            if( entA->GetPos().GetY() > -10.0f )
-                entA->Damage( 30 );
+            if( entA->GetPos().GetY() > -10.0f && entA->GetShipType() != 9 )
+                entA->Damage( 2 );
         
     }
 
@@ -1165,19 +1303,39 @@ void CTOFNContext::UpdateAllEntities()
                 if( pShip->GetHealth() <= 0 )
                 {
                     
-                    if( type & ENTTYPE_ENEMY ) {
-                    
-                        int t = ( pShip->GetShipType() == 6 )? 0 : Util::RandomNumber( 0, 1 );
-                        int count = ( pShip->GetShipType() == 6 )? 45 : Util::RandomNumber( 3, 6 );
+                    if( pShip->GetShipType() != 9 ) {
                         
-                        CreateOrbs( t, count, pShip->GetX(), pShip->GetY() );
-                    
+                        bool destroy = true;
+                        
+                        if( type & ENTTYPE_ENEMY ) {
+                        
+                            int t = ( pShip->GetShipType() == 6 )? 0 : Util::RandomNumber( 0, 1 );
+                            int count = ( pShip->GetShipType() == 6 )? 45 : Util::RandomNumber( 3, 6 );
+                            
+                            CreateOrbs( t, count, pShip->GetX(), pShip->GetY() );
+                        
+                        }
+                        
+                        if( type & ENTTYPE_PLAYER && m_bPlayerInvincible ) {
+                         
+                            destroy = false;
+                            
+                        }
+                        
+                        if( destroy ) {
+        
+                            DestroyShip( pShip, false );
+                            
+                            if( type & ENTTYPE_PLAYER )
+                                m_pPlayerEntity = NULL;
+                            
+                        }
+                        
+                    } else {
+                     
+                        pShip->SetAIEnabled( false );
+                        m_bPlayerInvincible = true;
                     }
-                    
-                    DestroyShip( pShip, false );
-                    
-                    if( type & ENTTYPE_PLAYER )
-                        m_pPlayerEntity = NULL;
 
                 }
 
@@ -1326,21 +1484,42 @@ void CTOFNContext::DebugDrawQuadTree() {
     
 }
 
-void CTOFNContext::DrawExplosions() {
+
+void CTOFNContext::DrawSmoke() {
     
-    m_pTextureFactory->GetObjectContent( "pixel.png" )->Bind();
+    m_pTextureFactory->GetObjectContent( "smoke.png" )->Bind();
     
     m_pDrawContext->UseShaderProgram( m_pGraphicsContext->GetShaderIDFromIndex( 1 ) );
     
     
-    boost::ptr_vector< CParticleExplosion >::iterator iter = m_pExplosions.begin();
-    for( ; iter != m_pExplosions.end(); iter++ ) {
+    boost::ptr_vector< CSmokePlume >::iterator iter = m_pSmokePlumes.begin();
+    for( ; iter != m_pSmokePlumes.end(); iter++ ) {
         
         ( *iter ).Draw();
+    
     }
     
     m_pDrawContext->UseShaderProgram( m_pGraphicsContext->GetShaderIDFromIndex( 0 ) );
     
+    m_pDrawContext->Bind2DVertexBuffer();
+    
+    
+}
+
+
+void CTOFNContext::DrawExplosions() {
+    
+    m_pDrawContext->UseShaderProgram( m_pGraphicsContext->GetShaderIDFromIndex( 4 ) );
+    
+    m_pTextureFactory->GetObjectContent( "pixel.png" )->Bind();
+    
+    boost::ptr_vector< CParticleExplosion >::iterator iter2 = m_pExplosions.begin();
+    for( ; iter2 != m_pExplosions.end(); iter2++ ) {
+        
+        ( *iter2 ).Draw();
+    }
+    
+    m_pDrawContext->UseShaderProgram( m_pGraphicsContext->GetShaderIDFromIndex( 0 ) );
     
     m_pDrawContext->Bind2DVertexBuffer();
 
@@ -1348,21 +1527,60 @@ void CTOFNContext::DrawExplosions() {
 }
 
 void CTOFNContext::UpdateExplosions() {
- 
-    boost::ptr_vector< CParticleExplosion >::iterator iter = m_pExplosions.begin();
+
+    boost::ptr_vector< CSmokePlume >::iterator iter = m_pSmokePlumes.begin();
     
-    for( ;iter != m_pExplosions.end(); ) {
-     
+    for( ;iter != m_pSmokePlumes.end(); ) {
+        
         if( ( *iter ).KillMe() ) {
-            m_pEntityManager->DeleteEntity( ( *iter ).GetExplosionEntity() );
-            iter = m_pExplosions.erase( iter );
+            iter = m_pSmokePlumes.erase( iter );
         } else {
-         
+            
             ( *iter ).Think( GetFrameDelta() );
             iter++;
             
         }
     }
+    
+    boost::ptr_vector< CParticleExplosion >::iterator iter2 = m_pExplosions.begin();
+    
+    for( ;iter2 != m_pExplosions.end(); ) {
+
+        if( ( *iter2 ).KillMe() ) {
+            m_pEntityManager->DeleteEntity( ( *iter2 ).GetExplosionEntity() );
+            iter2 = m_pExplosions.erase( iter2 );
+        } else {
+         
+            ( *iter2 ).Think( GetFrameDelta() );
+            iter2++;
+            
+        }
+    }
+    
+}
+
+void CTOFNContext::DrawFunkyBackground() {
+ 
+    DrawContext()->UseShaderProgram( GraphicsContext()->GetShaderIDFromIndex( 6 ) );
+    DrawContext()->Bind2DVertexBuffer();
+    
+    static float funk = 0.0f;
+    
+    funk += 30.0f * GetFrameDelta();
+    
+    glActiveTexture( GL_TEXTURE1 );
+    int t = glGetUniformLocation( GraphicsContext()->GetShaderIDFromIndex( 6 ), "noiseImage" );
+    glUniform1i( t, 1 );
+    t = glGetUniformLocation(GraphicsContext()->GetShaderIDFromIndex( 6 ), "funkFactor" );
+    glUniform1f( t, funk );
+    m_pFunkyBGFBO->BindTexture();
+    glActiveTexture( GL_TEXTURE0 );
+    
+    DrawContext()->DrawMaterial( *m_pPixelMat, 0.0f, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT, 1.0f, 1.0f, 1.0f, 1.0f );
+    
+    DrawContext()->UseShaderProgram( GraphicsContext()->GetShaderIDFromIndex( 0 ) );
+    DrawContext()->Bind2DVertexBuffer();
+    
     
 }
 
@@ -1375,11 +1593,13 @@ void CTOFNContext::GameLogic()
         
         m_CollisionEngine.CheckForQuadTreeCollisions( &m_QuadTree, &m_CollisionCallback );
 
+        UpdateExplosions();
+        
         UpdateAllEntities();
 
-        DoEnemyGenerator();
+        UpdateTextPopups();
         
-        UpdateExplosions();
+        DoEnemyGenerator();
     
     }
     

@@ -91,12 +91,16 @@ void CEnemyAI::Think()
     
     if( s->GetShipType() == 9 ) {
         
-        if( s->GetY() > 0.0f ) {
+        if( s->GetY() > -100.0f ) {
          
-            s->SetPos( s->GetX(), 0.0f );
-            m_bBossModeEnable = true;
+            s->SetPos( s->GetX(), -100.0f );
             
-            p->ToggleBossMode( true );
+            if( !m_bBossModeEnable ) {
+                
+                m_bBossModeEnable = true;
+                p->ToggleBossMode( true );
+            
+            }
             
         }
         
@@ -111,8 +115,9 @@ void CEnemyAI::Think()
                         
                         s->SetNextShotTime( SDL_GetTicks() + 50 );
                      
-                        CWorldEntity * e = p->FireBulletFrom( ENTTYPE_ENBULLET, m_BossCurGun * 50.0f, 100.0f, 10.0f, 900.0f, 270.0f );
+                        CAIEntity * e = p->FireBulletFrom( ENTTYPE_ENBULLET, m_BossCurGun * 50.0f, 100.0f, BOSS_BLT_DMG, 900.0f, 270.0f );
                         e->SetSize( 100, 100 );
+                        e->SetDrawDepth( 3 );
                         
                         if( m_BossShootType == 0 ) {
                         
@@ -161,7 +166,7 @@ void CEnemyAI::Think()
                     case 3: {
                         
                         float x = 0.0f;
-                        float y = 100.0f;
+                        float y = 10.0f;
                         float startang = 270.0f;
                         float spreadang = 10.0f;
                         
@@ -183,9 +188,10 @@ void CEnemyAI::Think()
                             
                             for( int j = 0; j < 5; j++ ) {
                                 
-                                CWorldEntity * e = p->FireBulletFrom( ENTTYPE_ENBULLET, x, y, 10.0f, 250.0f, startang );
+                                CAIEntity * e = p->FireBulletFrom( ENTTYPE_ENBULLET, x, y, BOSS_BLT_DMG, 250.0f, startang );
                                 startang += spreadang;
                                 e->SetSize( 100, 100 );
+                                e->SetDrawDepth( 3 );
                                 
                             }
                             
@@ -221,7 +227,7 @@ void CEnemyAI::Think()
                     }
                     case 4: {
                         for( int j = 0; j < 80; j++ )
-                            p->FireBulletFrom( ENTTYPE_ENBULLET,  j * 10, 100.0f, 2.0f, Util::RandomNumber( 200, 350 ) );
+                            p->FireBulletFrom( ENTTYPE_ENBULLET,  j * 10, 10.0f, 1.0f, Util::RandomNumber( 200, 350 ) );
                         
                         s->SetNextShotTime( SDL_GetTicks() + 1000 );
                         m_BossShootIter++;
@@ -236,8 +242,9 @@ void CEnemyAI::Think()
                     }
                     case 5: {
                         for( int j = 0; j < 6; j++ ) {
-                            CWorldEntity * e = p->FireBulletFrom( ENTTYPE_ENBULLET, 200 * j, 100.0f, 10.0f, 400.0f, 270.0f );
+                            CAIEntity * e = p->FireBulletFrom( ENTTYPE_ENBULLET, 200 * j, 10.0f, BOSS_BLT_DMG, 400.0f, 270.0f );
                             e->SetSize( 100, 100 );
+                            e->SetDrawDepth( 3 );
                         }
                         
                         m_BossShootIter++;
@@ -264,6 +271,7 @@ void CEnemyAI::Think()
             
         }
         
+        p->SetBossHealth( s->GetHealth() );
         p->SetBossHealthPercent( ( float )s->GetHealth() / ( float )s->GetMaxHealth() );
         
     }

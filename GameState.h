@@ -21,18 +21,27 @@ private:
     CGameInput m_GameInput;
     CShipEntity * m_pPlayerEntity;
     CFontMaterial * m_pHUDFont;
-    CFrameBufferObject m_fboBullets, m_fboBullets2;
-
+    CFrameBufferObject m_fboCurBullets, m_fboTrailBullets, m_fboTrailBulletsTemp;
+    CFrameBufferObject m_fboNoiseImage;
+    GLuint t;
     bool m_DrawSeconds;
     long int m_NextSecondsFlash;
     
     long int m_GameTimer;
     
     void DrawBullets();
+    void GenerateNoiseImage();
+    
+    unsigned long int m_EndCutSceneTriggerTime;
     
 public:
 
     CGameState();
+    virtual ~CGameState() {
+        
+        glDeleteTextures( 1, &t );
+        
+    }
 
     void Init();
     void PostInit();

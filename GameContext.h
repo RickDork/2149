@@ -16,8 +16,10 @@
 #include "Define.h"
 #include "OrbEntity.h"
 #include "OrbAI.h"
+#include "SmokePlume.h"
+#include "TextPopup.h"
 
-#define MAX_STARS 2000
+#define MAX_STARS 2500
 
 class CEnemyGenQueue {
   
@@ -55,11 +57,16 @@ private:
     float m_StarFieldSpeedMul;
     bool m_bBossMode;
     float m_BossHealthPercent;
+    float m_BossHealth;
+    bool m_bCutScene;
+    bool m_bPlayerInvincible;
     
     CQuadTree m_QuadTree;
 
     boost::ptr_vector< CStar > m_pStars;
     boost::ptr_vector< CParticleExplosion > m_pExplosions;
+    boost::ptr_vector< CSmokePlume > m_pSmokePlumes;
+    boost::ptr_vector< CTextPopup > m_pTextPopups;
     
     std::vector< int > m_Upgrades;
     
@@ -76,6 +83,8 @@ private:
     CPhysicsWorld m_PhysicsWorld;
     CTextureImage img;
     CCollisionCallback m_CollisionCallback;
+    CFrameBufferObject * m_pFunkyBGFBO;
+    CTextureImage * m_pPixelMat;
 
 	std::vector< CEnemyData > m_EnemyData;
     std::vector< CEnemyGenQueue > m_EnemyGenQueue;
@@ -124,6 +133,18 @@ public:
         
     }
     
+    void ToggleScene( bool b ) {
+     
+        m_bCutScene = b;
+        
+    }
+    
+    bool IsCutsceneOn() {
+     
+        return m_bCutScene;
+        
+    }
+    
     void ToggleGameFrozen( bool b ) {
      
         m_bGameFrozen = b;
@@ -144,6 +165,18 @@ public:
     void SetBossHealthPercent( float f ) {
      
         m_BossHealthPercent = f;
+        
+    }
+    
+    void SetBossHealth( float f ) {
+     
+        m_BossHealth = f;
+        
+    }
+    
+    float GetBossHealth() {
+     
+        return m_BossHealth;
         
     }
     
@@ -339,19 +372,37 @@ public:
     bool HasUpgrade( int ); 
     
     void UpdateAllEntities();
+    void UpdateTextPopups();
     void UpdateExplosions();
 
     void CreateStarBackground();
     void DrawStarBackground();
     void DrawExplosions();
+    void DrawTextPopups();
+    void DrawSmoke();
 
     void DestroyShip( CShipEntity *, bool );
     
     void AddEnemyToGenQueue( int, float );
     void ClearGenQueue();
 
+    void SetFunkyBackgroundFBO( CFrameBufferObject * fbo ) {
+     
+        m_pFunkyBGFBO = fbo;
+        
+    }
+    
+    void SetPixelMat( CTextureImage * mat ) {
+     
+        m_pPixelMat = mat;
+        
+    }
+    
     COrbEntity * CreateOrb( int, float, float );
     void CreateOrbs( int, int, float, float );
+    CSmokePlume * CreateSmokePlume( float, float );
+    void CreateExplosionsAndSmoke( int, int, float, float );
+    void CreateExplosionsAndSmoke( int, float, float );
     CParticleExplosion * CreateExplosion( int, float, float );
     CShipEntity * CreatePlayerEntity();
 	CShipEntity * CreateEnemyEntity( int, float, float, float );
@@ -364,9 +415,10 @@ public:
     CAIEntity * FireBulletFrom( int, float, float, float, float );
     void FireBulletFromGunAtAngle( int, int, CShipEntity *, float, float );
     void FireBulletFrom( int, CShipEntity * , float );
-
+    void AddPlayerPopupText( std::string, float, float, float, float, float );
     void HandleEntityContact( void *, int, void *, int );
-
+    void DrawFunkyBackground();
+    
     void GameLogic();
 
     CTOFNContext();

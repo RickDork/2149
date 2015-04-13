@@ -21,13 +21,13 @@ void CExplosionSegment::Init( float range, int type, Vector2< float > pos, float
         m_FadeSpeed = Util::RandomNumber( 300, 350 );
         
     } else {
-     
+        
         if( type == 3 )
             m_FadeSpeed = 100;
         else
             m_FadeSpeed = 500;
         m_VelocityStop = Util::RandomNumber( 2000, 2800 );
-    
+        
     }
     
     for( int j = 0; j < MAX_PARTICLES_PER_ARC; j++ ) {
@@ -44,7 +44,7 @@ void CExplosionSegment::Init( float range, int type, Vector2< float > pos, float
         m_Pos[j].Set( pos.GetX(), pos.GetY() );
         m_Color[j].Set( 255.0f, 255.0f, 255.0f, 128.0f );
         m_Velocity[j].Set( vx, vy );
-
+        
         
     }
     
@@ -69,7 +69,7 @@ bool CExplosionSegment::Think( CInstancedParticleEngine & particleEngine, int pa
             
             float newx = x + vx * dps;
             float newy = y + vy * dps;
-    
+            
             hasActiveParticles = true;
             
             m_Pos[j].Set( newx, newy + 300.0f * dps );
@@ -78,7 +78,7 @@ bool CExplosionSegment::Think( CInstancedParticleEngine & particleEngine, int pa
             if( !m_bRingExplosion ) {
                 
                 if( type == 1 ) {
-                
+                    
                     rD = 30.0f;
                     gD = 450.0f;
                     bD = 900.0f;
@@ -99,7 +99,7 @@ bool CExplosionSegment::Think( CInstancedParticleEngine & particleEngine, int pa
                     aD = m_FadeSpeed;
                     
                 } else {
-                 
+                    
                     rD = 0.0f;
                     gD = 0.0f;
                     bD = 0.0f;
@@ -123,14 +123,14 @@ bool CExplosionSegment::Think( CInstancedParticleEngine & particleEngine, int pa
                     bD = 0.0f;
                     aD = m_FadeSpeed;
                 }
-                    
+                
             }
             
             if( m_LayerType == 2 )
                 bD = 0.0f;
-        
-            if( m_LayerType > 0 && Util::Dist( m_Pos[j], m_Origin ) > m_MaxRange ) {
             
+            if( m_LayerType > 0 && Util::Dist( m_Pos[j], m_Origin ) > m_MaxRange ) {
+                
                 float vxmul = 1.0f;
                 float vymul = 1.0f;
                 float tmul = 1.0f;
@@ -151,49 +151,49 @@ bool CExplosionSegment::Think( CInstancedParticleEngine & particleEngine, int pa
             }
             
             /*
-            m_ExplosionMaxVelocity[j].Get( &mvx, &mvy );
-            
-            int elapsed = SDL_GetTicks() - m_StartTime;
-            bool core = false;
-            
-            if( elapsed == 0 )
-                elapsed = 1;
-            
-            if( sqrtf( mvx*mvx + mvy*mvy ) < 100.0f )
-                core = true;
-            
-            if( elapsed > 150 ) {
-                
-                if( core ) {
-                    
-                    rD = 0.0f;
-                    gD = 0.0f;
-                    
-                } else {
-                    
-                    rD = 345.0f;
-                    gD = 500.0f;
-                    
-                }
-                
-                aD = 605.0f;
-                
-            } else {
-                
-                rD = 20.0f;
-                gD = 10.0f;
-                aD = 10.0f;
-                
-            }
-            
-            //if( Util::Dist( x, y, m_Origin.GetX() , m_Origin.GetY() ) < 50.0f )
-            //    bD = 300.0f;
-            
-            if( !core )
-                bD = 700.0f;
-            
-            m_ExplosionPos[j].Set( newx, newy );
-            m_ExplosionVelocity[j].Set( mvx * Util::MaxF( ( 1000 / elapsed ), 1.0f ), mvy * Util::MaxF( ( 1000 / elapsed ), 1.0f ) );*/
+             m_ExplosionMaxVelocity[j].Get( &mvx, &mvy );
+             
+             int elapsed = SDL_GetTicks() - m_StartTime;
+             bool core = false;
+             
+             if( elapsed == 0 )
+             elapsed = 1;
+             
+             if( sqrtf( mvx*mvx + mvy*mvy ) < 100.0f )
+             core = true;
+             
+             if( elapsed > 150 ) {
+             
+             if( core ) {
+             
+             rD = 0.0f;
+             gD = 0.0f;
+             
+             } else {
+             
+             rD = 345.0f;
+             gD = 500.0f;
+             
+             }
+             
+             aD = 605.0f;
+             
+             } else {
+             
+             rD = 20.0f;
+             gD = 10.0f;
+             aD = 10.0f;
+             
+             }
+             
+             //if( Util::Dist( x, y, m_Origin.GetX() , m_Origin.GetY() ) < 50.0f )
+             //    bD = 300.0f;
+             
+             if( !core )
+             bD = 700.0f;
+             
+             m_ExplosionPos[j].Set( newx, newy );
+             m_ExplosionVelocity[j].Set( mvx * Util::MaxF( ( 1000 / elapsed ), 1.0f ), mvy * Util::MaxF( ( 1000 / elapsed ), 1.0f ) );*/
             
             float newR = Util::MinMaxF( r, -rD * dps, 0.0f );
             float newG = Util::MinMaxF( g, -gD * dps, 0.0f );
@@ -201,9 +201,9 @@ bool CExplosionSegment::Think( CInstancedParticleEngine & particleEngine, int pa
             float newA = Util::MinMaxF( a, -aD * dps, 0.0f );
             
             m_Color[j].Set( newR, newG, newB, newA );
-
+            
         }
-
+        
         
         particleEngine.SetParticleSize( particleOffset + j, m_Size[j].GetX(), m_Size[j].GetY() );
         particleEngine.SetParticleColor( particleOffset + j, r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f );
@@ -219,12 +219,12 @@ bool CExplosionSegment::Think( CInstancedParticleEngine & particleEngine, int pa
 }
 
 void CExplosionLayer::Init( float range, int type, Vector2< float > pos ) {
- 
+    
     float expTheta = 360.0f / ( float )MAX_EXPLOSION_ARCS_PER_LAYER;
     m_numActiveLayers = MAX_EXPLOSION_ARCS_PER_LAYER;
     
     for( int j = 0; j < MAX_EXPLOSION_ARCS_PER_LAYER; j++ ) {
-     
+        
         float minRange = j * expTheta;
         float maxRange = ( j == MAX_EXPLOSION_ARCS_PER_LAYER - 1 )? 360.0f : ( j + 1 ) * expTheta;
         
@@ -237,9 +237,9 @@ void CExplosionLayer::Init( float range, int type, Vector2< float > pos ) {
 }
 
 bool CExplosionLayer::Think( CInstancedParticleEngine & particleEngine, int particleOffset, float dps ) {
- 
+    
     for( int j = 0; j < MAX_EXPLOSION_ARCS_PER_LAYER; j++ ) {
-     
+        
         if( m_ExplosionSegments[j].IsActive() )
             if( !m_ExplosionSegments[j].Think( particleEngine, particleOffset + j * MAX_PARTICLES_PER_ARC, dps ) )
                 m_numActiveLayers--;
@@ -255,7 +255,7 @@ bool CExplosionLayer::Think( CInstancedParticleEngine & particleEngine, int part
 
 
 void CParticleExplosion::Init( int type, float range, float x, float y ) {
-
+    
     m_ParticleEngine.Init( MAX_EXPLOSION_LAYERS * MAX_EXPLOSION_ARCS_PER_LAYER * MAX_PARTICLES_PER_ARC, 1 );
     
     m_Origin.Set( x, y );
@@ -268,20 +268,20 @@ void CParticleExplosion::Init( int type, float range, float x, float y ) {
         ringType = 3;
     
     for( int j = 0; j < MAX_EXPLOSION_LAYERS; j++ ) {
-     
+        
         m_ExplosionLayers[j].Init( range, ( j == 0 ) ? ringType : type, Vector2< float >( x + Util::RandomNumber( -20, 20 ), y + Util::RandomNumber( -20, 20 ) ) );
         
     }
-
+    
     
 }
 
 void CParticleExplosion::Think( float dps ) {
- 
+    
     m_bKillMe = true;
     
     for( int j = 0; j < MAX_EXPLOSION_LAYERS; j++ ) {
-     
+        
         int pOffset = j * MAX_EXPLOSION_ARCS_PER_LAYER * MAX_PARTICLES_PER_ARC;
         
         if( m_ExplosionLayers[j].Think( m_ParticleEngine, pOffset, dps ) )
@@ -289,13 +289,13 @@ void CParticleExplosion::Think( float dps ) {
         
         
     }
-  
+    
     
 }
 
 
 void CParticleExplosion::Draw() {
-
+    
     m_ParticleEngine.BindVertexBuffers();
     m_ParticleEngine.Draw();
     
