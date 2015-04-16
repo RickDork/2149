@@ -1,0 +1,268 @@
+[
+
+    {
+		"health": 10,
+		
+		"speedmin": 150,
+		"speedmax": 250,
+		
+		"width": 50,
+		"height": 50,
+		
+		"comment": "enemy 0",
+
+		"sprite": "Enemy.png"
+	},
+	
+	{
+		"health": 5,
+		
+		"speedmin": 550,
+		"speedmax": 850,
+		
+		"width": 50,
+		"height": 50,
+		
+		"sprite": "Enemy2.png",
+
+		"comment": "enemy 1",
+		
+		"gun": 
+		[
+			{
+                "dmg": 4,
+				"x": 0.5, 
+				"y": 0.5 
+			}
+			
+		]
+		
+	},
+	
+	{
+		"health": 5,
+		
+		"speedmin": 250,
+		"speedmax": 280,
+		
+		"width": 110,
+		"height": 80,
+		
+		"sprite": "Enemy3.png",
+
+		"comment": "enemy 2",
+		
+		"gun": 
+		[
+			{ 
+                "dmg": 4,
+				"x": 0.05, 
+				"y": 0.99
+			},
+			{ 
+                "dmg": 4,
+				"x": 0.95, 
+				"y": 0.99 
+			}
+		]
+		
+	},
+	
+	{
+		"health": 5,
+		
+		"speedmin": 50,
+		"speedmax": 150,
+		
+		"width": 50,
+		"height": 50,
+		
+		"sprite": "Enemy4.png",
+
+		"comment": "enemy 3",
+		
+		"gun": 
+		[
+			{ 
+                "dmg": 4,
+				"x": 0.5, 
+				"y": 0.5 
+			}
+        ]
+	},
+
+	{
+		"health": 35,
+		
+		"speedmin": 35,
+		"speedmax": 35,
+		
+		"width": 50,
+		"height": 50,
+
+		"comment": "enemy 4",
+		
+		"formation": 0,
+
+		"sprite": "Enemy5.png"
+
+	},
+
+
+	{
+		"health": 55,
+		
+		"speedmin": 435,
+		"speedmax": 435,
+		
+		"width": 70,
+		"height": 70,
+
+		"comment": "enemy 5",
+		
+		"formation": 0,
+
+		"sprite": "Enemy6.png",
+
+		"gun": 
+		[
+			{ 
+              		       "dmg": 2,
+				"x": 0.5, 
+				"y": 0.5 
+			}
+       		 ]
+
+	},
+
+  	  {
+		"health": 27,
+		
+		"speedmin": 150,
+		"speedmax": 250,
+		
+		"width": 50,
+		"height": 50,
+		
+		"comment": "enemy 6",
+
+		"sprite": "Enemy7.png"
+	},
+
+	{
+		"health": 300,
+		
+		"speedmin": 635,
+		"speedmax": 635,
+		
+		"width": 150,
+		"height": 150,
+
+		"comment": "enemy 7",
+		
+		"formation": 0,
+
+		"sprite": "Enemy6.png",
+
+		"gun": 
+		[
+			{ 
+              		       "dmg": 2,
+				"x": 0.5, 
+				"y": 0.5 
+			},
+	{ 
+              		       "dmg": 2,
+				"x": 0.5, 
+				"y": 0.45 
+			},
+	{ 
+              		       "dmg": 2,
+				"x": 0.5, 
+				"y": 0.55 
+			}
+       		 ]
+
+	},
+
+	{
+		"health": 100,
+		
+		"speedmin": 135,
+		"speedmax": 200,
+		
+		"width": 150,
+		"height": 150,
+
+		"comment": "enemy 8",
+		
+		"formation": 0,
+
+		"sprite": "Enemy8.png",
+
+		"gun": 
+		[
+			{ 
+              		       "dmg": 3,
+				"x": 0.13, 
+				"y": 0.1 
+			},
+			{ 
+              		       "dmg": 3,
+				"x": 0.5, 
+				"y": 0.07 
+			},
+			{ 
+              		       "dmg": 3,
+				"x": 0.8, 
+				"y": 0.1 
+			},
+			{ 
+              		       "dmg": 3,
+				"x": 0.06, 
+				"y": 0.5 
+			},
+			{ 
+              		       "dmg": 3,
+				"x": 0.9, 
+				"y": 0.5 
+			},
+			{ 
+              		       "dmg": 3,
+				"x": 0.13, 
+				"y": 0.85 
+			},
+			{ 
+              		       "dmg": 3,
+				"x": 0.5, 
+				"y": 0.9 
+			},
+			{ 
+              		       "dmg": 3,
+				"x": 0.85, 
+				"y": 0.85 
+			}
+
+
+       		 ]
+
+	},
+  	  {
+		"health": 100,
+		
+		"speedmin": 30,
+		"speedmax": 30,
+		
+		"width": 1024,
+		"height": 384,
+		"colwidth": 1024,
+		"colheight": 20,
+		
+		"comment": "enemy 9",
+
+		"sprite": "boss.png"
+	}
+
+
+
+]
