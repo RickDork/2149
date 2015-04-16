@@ -250,12 +250,19 @@ LuaCallBackFunction( GetStringWidth ) {
 }
 
 LuaCallBackFunction( DrawTexture ) {
- 
+    
     std::string texture = LString( 1 );
     float x = LNumber( 2 );
     float y = LNumber( 3 );
     int width = LNumber( 4 );
     int height = LNumber( 5 );
+    int frame = 0;
+    
+    if( LArgCount() == 6 ) {
+     
+        frame = LNumber( 6 ) - 1;
+        
+    }
     
     float r = 1.0f, g = 1.0f, b = 1.0f, a = 1.0f;
     
@@ -280,9 +287,13 @@ LuaCallBackFunction( DrawTexture ) {
     } else
         i = gLuaContext->TextureFactory()->GetObjectContent( texture );
     
-    if( i )
-        gLuaContext->DrawContext()->DrawMaterial( *i, x, y, width, height, r, g, b, a );
-
+    if( i ) {
+        
+        Vector2< float > offset = i->GetFrameOffset( frame );
+        
+        gLuaContext->DrawContext()->DrawMaterial( *i, frame, x + offset.GetX(), y + offset.GetY(), width, height, r, g, b, a );
+        
+    }
     
     return 0;
     
@@ -390,6 +401,45 @@ LuaCallBackFunction( FunkyBackground ) {
     
 }
 
+LuaCallBackFunction( GetAnimData ) {
+ 
+    std::string t = LString( 1 );
+    
+    CTextureImage * image = gLuaContext->TextureFactory()->GetObjectContent( t );
+    int numFrames = image->GetFrameCount();
+    
+    int * framePause = new int[numFrames];
+    
+    for( int j = 0 ; j < numFrames; j++ ) {
+     
+        framePause[j] = image->GetFrameDelay( j );
+        
+    }
+    
+    lua_createtable( pLuaState, 0, 0 );
+    
+        lua_pushstring( pLuaState, "FramePause" );
+        lua_createtable( pLuaState, 0, 0 );
+            for( int j = 0; j < numFrames; j++ ) {
+                
+                lua_pushnumber( pLuaState, j + 1 );
+                lua_pushnumber( pLuaState, framePause[j] );
+                lua_settable( pLuaState, -3 );
+            
+            }
+        lua_settable( pLuaState, -3 );
+    
+        lua_pushstring( pLuaState, "MaxFrames" );
+        lua_pushnumber( pLuaState, numFrames );
+        lua_settable( pLuaState, -3 );
+    
+    delete [] framePause;
+    
+    return 1;
+    
+    
+}
+
 void CTOFNLua::CreateLuaHooks()
 {
     
@@ -424,7 +474,7 @@ void CTOFNLua::CreateLuaHooks()
         LuaNameSpaceFunction( m_pLuaState, "Draw", DrawTexture );
         LuaNameSpaceFunction( m_pLuaState, "Draw", SetDrawHUD );
         LuaNameSpaceFunction( m_pLuaState, "Draw", FunkyBackground );
-    
+        LuaNameSpaceFunction( m_pLuaState, "Draw", GetAnimData );
     LuaFunction( m_pLuaState, TicksElapsed );
     LuaFunction( m_pLuaState, FreezeGameTicks );
     LuaFunction( m_pLuaState, UnfreezeGameTicks );

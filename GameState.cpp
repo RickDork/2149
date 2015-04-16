@@ -308,7 +308,7 @@ void CGameState::Draw()
         m_pGameContext->DrawStarBackground();
         m_pGameContext->DrawSmoke();
     
-       if( m_pGameContext->GetBossMode() )
+        if( m_pGameContext->GetBossMode() )
             DrawBullets();
 
         m_pGameContext->EntityManager()->DrawAllEntitiesAtDepth( 1 );

@@ -1565,14 +1565,37 @@ void CTOFNContext::DrawFunkyBackground() {
     DrawContext()->Bind2DVertexBuffer();
     
     static float funk = 0.0f;
+    static float theta = 0.0f;
+    static float thetaMul = 1.0f;
     
-    funk += 30.0f * GetFrameDelta();
+    funk = Util::MaxF( funk, 20.0f * GetFrameDelta(), 300.0f );
+    theta += 50.0f * thetaMul * GetFrameDelta();
+    
+    if( theta > 360.0f ) {
+     
+        theta = 360.0f;
+        thetaMul = -1.0f;
+        
+    }
+    
+    if( theta < -360.0f ) {
+     
+        theta = -360.0f;
+        thetaMul = 1.0f; 
+        
+    }
     
     glActiveTexture( GL_TEXTURE1 );
+    
     int t = glGetUniformLocation( GraphicsContext()->GetShaderIDFromIndex( 6 ), "noiseImage" );
     glUniform1i( t, 1 );
+    
     t = glGetUniformLocation(GraphicsContext()->GetShaderIDFromIndex( 6 ), "funkFactor" );
     glUniform1f( t, funk );
+    
+    t = glGetUniformLocation( GraphicsContext()->GetShaderIDFromIndex( 6 ), "theta" );
+    glUniform1f( t, theta * DEG2RAD );
+    
     m_pFunkyBGFBO->BindTexture();
     glActiveTexture( GL_TEXTURE0 );
     
