@@ -42,7 +42,7 @@ void CTOFNContext::InitializeGraphics()
     m_pGraphicsContext->LoadShaderProgram( "explosion.v", "explosion.f" );
     m_pGraphicsContext->LoadShaderProgram( "vertex.v", "noiseimage.f" );
     m_pGraphicsContext->LoadShaderProgram( "funkybg.v", "funkybg.f" );
-
+    m_pGraphicsContext->LoadShaderProgram( "funkybg.v", "funkybg2.f" );
     
     int width, height;
 
@@ -50,7 +50,7 @@ void CTOFNContext::InitializeGraphics()
     
     m_StarEngine.Init( MAX_STARS, 1 );
 
-    for( int j = 6; j >= 0; j-- )
+    for( int j = 7; j >= 0; j-- )
     {
 
         int id = m_pGraphicsContext->GetShaderIDFromIndex( j );
@@ -1559,44 +1559,79 @@ void CTOFNContext::UpdateExplosions() {
     
 }
 
-void CTOFNContext::DrawFunkyBackground() {
- 
-    DrawContext()->UseShaderProgram( GraphicsContext()->GetShaderIDFromIndex( 6 ) );
-    DrawContext()->Bind2DVertexBuffer();
+void CTOFNContext::DrawFunkyBackground1() {
     
     static float funk = 0.0f;
     static float theta = 0.0f;
     static float thetaMul = 1.0f;
     
     funk = Util::MaxF( funk, 20.0f * GetFrameDelta(), 300.0f );
+    
+    
     theta += 50.0f * thetaMul * GetFrameDelta();
     
     if( theta > 360.0f ) {
-     
+        
         theta = 360.0f;
         thetaMul = -1.0f;
         
     }
     
     if( theta < -360.0f ) {
-     
+        
         theta = -360.0f;
-        thetaMul = 1.0f; 
+        thetaMul = 1.0f;
         
     }
     
+    
+    DrawFunkyBackground( 6, funk, theta, thetaMul );
+    
+}
+
+void CTOFNContext::DrawFunkyBackground2() {
+ 
+    static float funk = 0.0f;
+    static float theta = 0.0f;
+    static float thetaMul = 1.0f;
+    
+    funk = Util::MaxF( funk, 40.0f * GetFrameDelta(), 255.0f );
+    
+    
+    theta += 50.0f * thetaMul * GetFrameDelta();
+    
+    if( theta > 360.0f )
+        theta -= 360.0f;
+    
+    DrawFunkyBackground( 7, funk, theta, thetaMul );
+    
+}
+
+void CTOFNContext::DrawFunkyBackground( int s, float & funk, float & theta, float & thetaMul ) {
+    
+    DrawContext()->UseShaderProgram( GraphicsContext()->GetShaderIDFromIndex( s ) );
+    DrawContext()->Bind2DVertexBuffer();
+
     glActiveTexture( GL_TEXTURE1 );
     
-    int t = glGetUniformLocation( GraphicsContext()->GetShaderIDFromIndex( 6 ), "noiseImage" );
+    int t = glGetUniformLocation( GraphicsContext()->GetShaderIDFromIndex( s ), "noiseImage" );
     glUniform1i( t, 1 );
     
-    t = glGetUniformLocation(GraphicsContext()->GetShaderIDFromIndex( 6 ), "funkFactor" );
+    t = glGetUniformLocation( GraphicsContext()->GetShaderIDFromIndex( s ), "scientistImage" );
+    glUniform1i( t, 2 );
+    
+    t = glGetUniformLocation(GraphicsContext()->GetShaderIDFromIndex( s ), "funkFactor" );
     glUniform1f( t, funk );
     
-    t = glGetUniformLocation( GraphicsContext()->GetShaderIDFromIndex( 6 ), "theta" );
+    t = glGetUniformLocation( GraphicsContext()->GetShaderIDFromIndex( s ), "theta" );
     glUniform1f( t, theta * DEG2RAD );
     
     m_pFunkyBGFBO->BindTexture();
+    
+    glActiveTexture( GL_TEXTURE2 );
+    CTextureImage * img = TextureFactory()->GetObjectContent( "scientistface2.png" );
+    img->Bind();
+    
     glActiveTexture( GL_TEXTURE0 );
     
     DrawContext()->DrawMaterial( *m_pPixelMat, 0.0f, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT, 1.0f, 1.0f, 1.0f, 1.0f );

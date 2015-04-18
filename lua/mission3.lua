@@ -110,18 +110,36 @@ function LEVEL.BossDeath()
         LEVEL.GastonW = LEVEL.GastonW * 5;
         LEVEL.ScientistH = LEVEL.ScientistH * 5;
         LEVEL.GastonH = LEVEL.GastonH * 5;
-        
+
         addDialogueText( DIALOG_PROFILE_GASTON2, "... Am I dead?", 3000, 11000 );
         addDialogueText( DIALOG_PROFILE_SCIENTIST, "No.", 3000, 17000 );
         addTimer( 19000, function() LEVEL.DrawTalkScene = true; end );
         
         addDialogueText( DIALOG_PROFILE_GASTON2, "Where are we?", 3000, 23000 );
-        addDialogueText( DIALOG_PROFILE_SCIENTIST, "On the cusp of the event horizon.", 3000, 28000 );
+        addDialogueText( DIALOG_PROFILE_SCIENTIST, "It doesn\'t matter.", 3000, 28000 );
         addTimer( 28500, function() 
                 LEVEL.FunkyBG = true; 
                 LEVEL.EnableTalkScene2 = true;
             end );
-        
+        addDialogueText( DIALOG_PROFILE_GASTON2, "I don\'t understand.", 3000, 36000 );
+        addDialogueText( DIALOG_PROFILE_SCIENTIST, "I just need to know...", 3000, 41000 );
+        addDialogueText( DIALOG_PROFILE_SCIENTIST, "Will you do it?", 3000, 45000 );
+        addDialogueText( DIALOG_PROFILE_GASTON2, "What?..", 3000, 48000 );
+        addDialogueText( DIALOG_PROFILE_GASTON2, "Oh.", 3000, 50000 );
+        addDialogueText( DIALOG_PROFILE_GASTON2, "No, I haven\'t decided yet.", 3000, 53000 );
+        addDialogueText( DIALOG_PROFILE_SCIENTIST, "There isn\'t time to decide.", 3000, 58000 );
+        addDialogueText( DIALOG_PROFILE_SCIENTIST, "We either enact this program and survive as a species..", 3000, 62000 );
+        addTimer( 65000, function() LEVEL.FunkyBG2 = true; end );
+        addDialogueText( DIALOG_PROFILE_SCIENTIST, ".. or we go extinct in under five years.", 3000, 71000 );
+        addDialogueText( DIALOG_PROFILE_GASTON2, "But..", 3000, 77000 );
+        addDialogueText( DIALOG_PROFILE_GASTON2, "Is it human?  Does it have thoughts? Memories?", 3000, 81000 );           
+        addDialogueText( DIALOG_PROFILE_SCIENTIST, "No.", 3000, 88000 );   
+        addDialogueText( DIALOG_PROFILE_GASTON2, "...", 3000, 90000 ); 
+        addDialogueText( DIALOG_PROFILE_SCIENTIST, "Well?", 3000, 95000 ); 
+        addDialogueText( DIALOG_PROFILE_GASTON2, "...", 3000, 97000 ); 
+        addDialogueText( DIALOG_PROFILE_SCIENTIST, "What\'s the matter?", 3000, 101000 ); 
+        addDialogueText( DIALOG_PROFILE_GASTON2, "What year is it?", 3000, 107000 ); 
+        addTimer( 113000, function() nextMission(); end );
     end
 
     
@@ -195,6 +213,12 @@ function LEVEL.Draw()
             
             Draw.FunkyBackground();
             
+            if( LEVEL.FunkyBG2 ) then
+               
+                Draw.FunkyBackground2();
+                
+            end
+            
         else
            
             Draw.DrawTexture( "pixel.png", 0, 0, Game.ScreenWidth(), Game.ScreenHeight(), 255, 255, 255, whitealpha );    
@@ -212,37 +236,52 @@ function LEVEL.Draw()
     end
     
     if( LEVEL.DrawTalkScene ) then
-       
-        if( not LEVEL.EnableTalkScene2 ) then
         
-            LEVEL.TalkSceneAlpha = LEVEL.TalkSceneAlpha + 70 * GetDelta();
+        if( not LEVEL.FunkyBG2 ) then
+    
 
-            if( LEVEL.TalkSceneAlpha > 255 ) then
+            if( not LEVEL.EnableTalkScene2 ) then
 
-                LEVEL.TalkSceneAlpha = 255;
+                LEVEL.TalkSceneAlpha = LEVEL.TalkSceneAlpha + 70 * GetDelta();
+
+                if( LEVEL.TalkSceneAlpha > 255 ) then
+
+                    LEVEL.TalkSceneAlpha = 255;
+
+                end
+
+            else
+
+                LEVEL.TalkSceneAlpha = LEVEL.TalkSceneAlpha - 70 * GetDelta();
+
+                if( LEVEL.TalkSceneAlpha < 0 ) then
+
+                    LEVEL.TalkSceneAlpha = 0;
+
+                    LEVEL.GastonW = -LEVEL.GastonW;
+                    LEVEL.ScientistW = -LEVEL.ScientistW;
+                    LEVEL.GastonX = 505;
+                    LEVEL.GastonY = 425;
+                    LEVEL.ScientistX = 250;
+                    LEVEL.ScientistY = 275;
+                    LEVEL.EnableTalkScene2 = false;
+                    LEVEL.ScientistW = LEVEL.ScientistW * 1.5;
+                    LEVEL.GastonW = LEVEL.GastonW * 1.5;
+                    LEVEL.ScientistH = LEVEL.ScientistH * 1.5;
+                    LEVEL.GastonH = LEVEL.GastonH * 1.5;
+
+
+                end
 
             end
             
         else
-           
+            
             LEVEL.TalkSceneAlpha = LEVEL.TalkSceneAlpha - 70 * GetDelta();
 
             if( LEVEL.TalkSceneAlpha < 0 ) then
 
                 LEVEL.TalkSceneAlpha = 0;
-        
-                LEVEL.GastonW = -LEVEL.GastonW;
-                LEVEL.ScientistW = -LEVEL.ScientistW;
-                LEVEL.GastonX = 505;
-                LEVEL.GastonY = 425;
-                LEVEL.ScientistX = 250;
-                LEVEL.ScientistY = 275;
-                LEVEL.EnableTalkScene2 = false;
-                LEVEL.ScientistW = LEVEL.ScientistW * 1.5;
-                LEVEL.GastonW = LEVEL.GastonW * 1.5;
-                LEVEL.ScientistH = LEVEL.ScientistH * 1.5;
-                LEVEL.GastonH = LEVEL.GastonH * 1.5;
-        
 
             end
             

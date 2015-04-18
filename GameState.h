@@ -21,7 +21,9 @@ private:
     CGameInput m_GameInput;
     CShipEntity * m_pPlayerEntity;
     CFontMaterial * m_pHUDFont;
-    CFrameBufferObject m_fboCurBullets, m_fboTrailBullets, m_fboTrailBulletsTemp;
+    CTrailsEffect m_BulletTrails;
+    //CFrameBufferObject m_fboCurBullets, m_fboTrailBullets, m_fboTrailBulletsTemp;
+    
     CFrameBufferObject m_fboNoiseImage;
     GLuint t;
     bool m_DrawSeconds;

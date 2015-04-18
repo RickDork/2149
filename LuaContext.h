@@ -40,7 +40,8 @@ public:
     virtual void SetBossHealth( float ) = 0;
     virtual void ToggleScene( bool ) = 0;
     virtual void CreateExplosionsAndSmoke( int, int, float, float ) = 0;
-    virtual void DrawFunkyBackground() = 0;
+    virtual void DrawFunkyBackground1() = 0;
+    virtual void DrawFunkyBackground2() = 0;
     
 	CLuaContext() : CGameContext() { }
 	virtual ~CLuaContext() { }

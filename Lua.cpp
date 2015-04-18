@@ -395,7 +395,15 @@ LuaCallBackFunction( CreateExplosions ) {
 
 LuaCallBackFunction( FunkyBackground ) {
  
-    gLuaContext->DrawFunkyBackground();
+    gLuaContext->DrawFunkyBackground1();
+    
+    return 0;
+    
+}
+
+LuaCallBackFunction( FunkyBackground2 ) {
+    
+    gLuaContext->DrawFunkyBackground2();
     
     return 0;
     
@@ -474,6 +482,7 @@ void CTOFNLua::CreateLuaHooks()
         LuaNameSpaceFunction( m_pLuaState, "Draw", DrawTexture );
         LuaNameSpaceFunction( m_pLuaState, "Draw", SetDrawHUD );
         LuaNameSpaceFunction( m_pLuaState, "Draw", FunkyBackground );
+        LuaNameSpaceFunction( m_pLuaState, "Draw", FunkyBackground2 );
         LuaNameSpaceFunction( m_pLuaState, "Draw", GetAnimData );
     LuaFunction( m_pLuaState, TicksElapsed );
     LuaFunction( m_pLuaState, FreezeGameTicks );

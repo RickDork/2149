@@ -13,10 +13,12 @@ void CGameState::Init()
 
     Log::Debug( "Doing game state init" );
 
-    m_fboCurBullets.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
-    m_fboTrailBullets.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
-    m_fboTrailBulletsTemp.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
-    m_fboNoiseImage.Init( SCREEN_WIDTH * .05f, SCREEN_HEIGHT * .05f );
+    //m_fboCurBullets.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
+    //m_fboTrailBullets.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
+    //m_fboTrailBulletsTemp.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
+    
+    m_BulletTrails.Init( m_pGameContext->DrawContext(), SCREEN_WIDTH, SCREEN_HEIGHT, .98f );
+    m_fboNoiseImage.Init( SCREEN_WIDTH, SCREEN_HEIGHT, .05f, .05f );
    
     m_EndCutSceneTriggerTime = 0;
     m_GameTimer = 0;
@@ -54,9 +56,7 @@ void CGameState::OnStateSwitch() {
     
     m_pPlayerEntity = m_pGameContext->GetPlayerEntity();
     
-    m_fboCurBullets.Clear();
-    m_fboTrailBullets.Clear();
-    m_fboTrailBulletsTemp.Clear();
+    m_BulletTrails.Clear();
     
     
 }
@@ -198,7 +198,12 @@ void CGameState::Think()
         
     } else {
         
-        SwitchToAnotherState( "UPGRADESELECT" );
+        if( m_pGameContext->GetCurrentMission() == 4 ) {
+            
+            OnStateSwitch();
+            
+        } else
+            SwitchToAnotherState( "UPGRADESELECT" );
         
     }
     
@@ -208,42 +213,27 @@ void CGameState::DrawBullets() {
     
     int b1 = 0, b2 = 0;
     
-    m_fboCurBullets.BeginDrawingToFBO();
-        glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
-        glClear( GL_COLOR_BUFFER_BIT );
+    m_BulletTrails.BeginDrawToCurrentBuffer();
         m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
-    
         b1 = m_pGameContext->EntityManager()->DrawAllEntitiesAtDepth( 0 );
-    
-        m_pGameContext->DrawContext()->UseShaderProgram( m_pGameContext->GraphicsContext()->GetShaderIDFromIndex( 3 ) );
-        m_pGameContext->DrawContext()->Bind2DVertexBuffer();
-    
+        m_pGameContext->GraphicsContext()->UseShader( 3 );
         b2 = m_pGameContext->EntityManager()->DrawAllEntitiesAtDepth( 3 );
+        m_pGameContext->GraphicsContext()->UseShader( 0 );
+    m_BulletTrails.EndDrawToCurrentBuffer();
 
-        m_pGameContext->DrawContext()->UseShaderProgram( m_pGameContext->GraphicsContext()->GetShaderIDFromIndex( 0 ) );
-        m_pGameContext->DrawContext()->Bind2DVertexBuffer();
-    
-    m_fboCurBullets.EndDrawingToFBO();
-    
-    CMatrix< float > mat;
-    mat.Identity();
-    mat.Translate( 0.0f, SCREEN_HEIGHT, 0.0f);
-    
     m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
     
-    m_pGameContext->DrawContext()->UseShaderProgram( m_pGameContext->GraphicsContext()->GetShaderIDFromIndex( 2 ) );
-    m_pGameContext->DrawContext()->Bind2DVertexBuffer();
-    m_fboTrailBullets.DrawTexture( m_pGameContext->DrawContext(), &mat );
+    m_pGameContext->GraphicsContext()->UseShader( 2 );
+    m_BulletTrails.DrawAccumBuffer();
     
-    m_pGameContext->DrawContext()->UseShaderProgram( m_pGameContext->GraphicsContext()->GetShaderIDFromIndex( 0 ) );
-    m_pGameContext->DrawContext()->Bind2DVertexBuffer();
-    m_fboCurBullets.DrawTexture( m_pGameContext->DrawContext(), &mat );
+    m_pGameContext->GraphicsContext()->UseShader( 0 );
+    m_BulletTrails.DrawCurrentBuffer();
     
-    m_fboTrailBullets.BeginDrawingToFBO();
+    m_BulletTrails.BeginDrawToAccumBuffer();
         if( b1 + b2 > 0 ) {
             
             m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
-            m_fboCurBullets.DrawTexture( m_pGameContext->DrawContext(), &mat );
+            m_BulletTrails.DrawCurrentBuffer();
             
         } else{
          
@@ -251,23 +241,7 @@ void CGameState::DrawBullets() {
             glClear( GL_COLOR_BUFFER_BIT );
             
         }
-    m_fboTrailBullets.EndDrawingToFBO();
-    
-    m_fboTrailBulletsTemp.BeginDrawingToFBO();
-        glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
-        glClear( GL_COLOR_BUFFER_BIT );
-        m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 0.98f );
-        m_fboTrailBullets.DrawTexture( m_pGameContext->DrawContext(), &mat );
-    m_fboTrailBulletsTemp.EndDrawingToFBO();
-    
-    m_fboTrailBullets.BeginDrawingToFBO();
-        glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
-        glClear( GL_COLOR_BUFFER_BIT );
-        m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
-        m_fboTrailBulletsTemp.DrawTexture( m_pGameContext->DrawContext(), &mat );
-    m_fboTrailBullets.EndDrawingToFBO();
-    
-    
+    m_BulletTrails.EndDrawToAccumBuffer();
     
     
     
@@ -282,7 +256,7 @@ void CGameState::GenerateNoiseImage() {
         glClear( GL_COLOR_BUFFER_BIT );
         m_pGameContext->DrawContext()->UseShaderProgram( m_pGameContext->GraphicsContext()->GetShaderIDFromIndex( 5 ) );
         m_pGameContext->DrawContext()->Bind2DVertexBuffer();
-            m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, 0.0f, SCREEN_HEIGHT * .95f, SCREEN_WIDTH * .05f, SCREEN_HEIGHT * .05f, 1.0f, 0.0f, 0.0f, 1.0f );
+            m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, m_fboNoiseImage.GetOffsetX(), m_fboNoiseImage.GetOffsetY(), m_fboNoiseImage.GetWidth(), m_fboNoiseImage.GetHeight(), 1.0f, 0.0f, 0.0f, 1.0f );
         m_pGameContext->DrawContext()->UseShaderProgram( m_pGameContext->GraphicsContext()->GetShaderIDFromIndex( 0 ) );
     m_fboNoiseImage.EndDrawingToFBO();
     
@@ -307,6 +281,7 @@ void CGameState::Draw()
     
         m_pGameContext->DrawStarBackground();
         m_pGameContext->DrawSmoke();
+    
     
         if( m_pGameContext->GetBossMode() )
             DrawBullets();

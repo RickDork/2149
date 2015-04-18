@@ -417,7 +417,9 @@ public:
     void FireBulletFrom( int, CShipEntity * , float );
     void AddPlayerPopupText( std::string, float, float, float, float, float );
     void HandleEntityContact( void *, int, void *, int );
-    void DrawFunkyBackground();
+    void DrawFunkyBackground1();
+    void DrawFunkyBackground2();
+    void DrawFunkyBackground( int, float &, float &, float & );
     
     void GameLogic();
 

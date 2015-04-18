@@ -459,7 +459,7 @@ function presentChapter( num, title )
             
                 if( num == "IV" ) then
                 
-                    missiontext = "Final mission."
+                    missiontext = "Finale."
                 
                 end
 
