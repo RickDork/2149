@@ -6,7 +6,7 @@
 #endif
 
 CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 3 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f ),
-    m_bCutScene( false ), m_BossHealth( 0.0f ), m_bPlayerInvincible( false )
+    m_bCutScene( false ), m_BossHealth( 0.0f ), m_bPlayerInvincible( false ), m_pSpaceFogFBO( NULL )
 {
     
     m_QuadTree.Init( 0, -100, 1200 );
@@ -43,6 +43,8 @@ void CTOFNContext::InitializeGraphics()
     m_pGraphicsContext->LoadShaderProgram( "vertex.v", "noiseimage.f" );
     m_pGraphicsContext->LoadShaderProgram( "funkybg.v", "funkybg.f" );
     m_pGraphicsContext->LoadShaderProgram( "funkybg.v", "funkybg2.f" );
+    m_pGraphicsContext->LoadShaderProgram( "vertex.v", "noisebg.f" );
+    m_pGraphicsContext->LoadShaderProgram( "vertex.v", "spacefog.f" );
     
     int width, height;
 
@@ -50,7 +52,7 @@ void CTOFNContext::InitializeGraphics()
     
     m_StarEngine.Init( MAX_STARS, 1 );
 
-    for( int j = 7; j >= 0; j-- )
+    for( int j = 9; j >= 0; j-- )
     {
 
         int id = m_pGraphicsContext->GetShaderIDFromIndex( j );
@@ -139,6 +141,15 @@ void CTOFNContext::GameplayStart() {
     
 }
 
+bool CTOFNContext::GetBoolean( std::string s ) {
+ 
+    if( s == "GameFrozen" )
+        return m_bGameFrozen;
+        
+    return false;
+    
+}
+
 void CTOFNContext::NextMission() {
     
     m_RetryCount = 0;
@@ -189,6 +200,30 @@ void CTOFNContext::LoadEnemyData()
             
             
         }
+
+        if( doc[j].HasMember( "trail" ) )
+        {
+            
+            rapidjson::Value & trailarray = doc[j]["trail"];
+            
+            if( trailarray.IsArray() )
+            {
+                
+                rapidjson::SizeType nTrails = doc[j]["trail"].Size();
+                for( rapidjson::SizeType i = 0; i < nTrails; i++ )
+                {
+                    
+                    rapidjson::Value & v = doc[j]["trail"][i];
+                    d.m_TrailPos.push_back( Vector2< float >( v["x"].GetDouble(), v["y"].GetDouble() ) );
+                    d.m_TrailColor.push_back( Vector3< float >( v["r"].GetDouble(), v["g"].GetDouble(), v["b"].GetDouble() ) );
+
+                    
+                }
+                
+            }
+            
+        }
+
 
 		if( doc[j].HasMember( "gun" ) )
 		{
@@ -284,6 +319,10 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
     
     ent->AddGun( .3f, .23f, gunDmg );
 	ent->AddGun( .7f, .23f, gunDmg );
+    
+    ent->SetTrailsImage( TextureFactory()->GetObjectContent( "shiptrail.png" ) );
+    ent->AddTrails( .33f, .8f );
+    ent->SetTrailColor( .62, .9f, 1.0f, 1.0f );
 
     CBoxCollisionBody * colBody = new CBoxCollisionBody;
     colBody->FitFromCenter( 80.0f, 80.0f, 64.0f, 64.0f );
@@ -804,6 +843,21 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float
     }
     
     aic->SetEnemyType( type );
+    
+    std::vector< Vector2< float > > & trails = d.m_TrailPos;
+    
+    if( trails.size() > 0 ) {
+    
+        ent->SetTrailsImage( TextureFactory()->GetObjectContent( "shiptrail.png" ) );
+        
+        for( int j = 0; j < trails.size(); j++ ) {
+         
+            ent->AddTrails( trails[j].GetX(),  trails[j].GetY() );
+            ent->SetTrailColor( d.m_TrailColor[j].GetX(), d.m_TrailColor[j].GetY(), d.m_TrailColor[j].GetZ(), 1.0f );
+            
+        }
+        
+    }
 
 	std::vector< Vector2< float > > & v = d.m_GunPos;
 
@@ -1604,6 +1658,39 @@ void CTOFNContext::DrawFunkyBackground2() {
         theta -= 360.0f;
     
     DrawFunkyBackground( 7, funk, theta, thetaMul );
+    
+}
+
+void CTOFNContext::DrawSpaceFog() {
+ 
+    if( m_pSpaceFogFBO ) {
+     
+        static float stadd = 0.0f;
+        
+        if( !m_bGameFrozen ) {
+            
+            stadd += .25 * GetFrameDelta();
+            
+        }
+
+        DrawContext()->UseShaderProgram( GraphicsContext()->GetShaderIDFromIndex( 9 ) );
+       
+        int f = glGetUniformLocation( GraphicsContext()->GetShaderIDFromIndex( 9 ), "STAdd" );
+        glUniform1f( f, stadd );
+        CMatrix< float > mat;
+        mat.Identity();
+        mat.Translate( 0.0f, SCREEN_HEIGHT, 0.0f );
+        mat.Scale( SCREEN_WIDTH, -SCREEN_HEIGHT, 1.0f );
+        
+        DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 0.1f );
+        
+        DrawContext()->Bind2DVertexArray();
+        m_pSpaceFogFBO->DrawTextureDontForceSize( DrawContext(), &mat );
+        DrawContext()->UseShaderProgram( GraphicsContext()->GetShaderIDFromIndex( 0 ) );
+        
+
+        
+    }
     
 }
 

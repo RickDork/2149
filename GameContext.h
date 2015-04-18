@@ -19,7 +19,7 @@
 #include "SmokePlume.h"
 #include "TextPopup.h"
 
-#define MAX_STARS 2500
+#define MAX_STARS 3000
 
 class CEnemyGenQueue {
   
@@ -83,7 +83,7 @@ private:
     CPhysicsWorld m_PhysicsWorld;
     CTextureImage img;
     CCollisionCallback m_CollisionCallback;
-    CFrameBufferObject * m_pFunkyBGFBO;
+    CFrameBufferObject * m_pFunkyBGFBO, * m_pSpaceFogFBO;
     CTextureImage * m_pPixelMat;
 
 	std::vector< CEnemyData > m_EnemyData;
@@ -121,9 +121,17 @@ public:
     
     void NextMission();
     
+    bool GetBoolean( std::string );
+    
     void SetStarBackgroundSpeedMul( float m ) {
      
         m_StarFieldSpeedMul = m;
+        
+    }
+    
+    void SetSpaceFogFBO( CFrameBufferObject * pSpaceFogFBO ) {
+     
+        m_pSpaceFogFBO = pSpaceFogFBO;
         
     }
     
@@ -420,6 +428,7 @@ public:
     void DrawFunkyBackground1();
     void DrawFunkyBackground2();
     void DrawFunkyBackground( int, float &, float &, float & );
+    void DrawSpaceFog();
     
     void GameLogic();
 

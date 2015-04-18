@@ -19,7 +19,8 @@ void CGameState::Init()
     
     m_BulletTrails.Init( m_pGameContext->DrawContext(), SCREEN_WIDTH, SCREEN_HEIGHT, .98f );
     m_fboNoiseImage.Init( SCREEN_WIDTH, SCREEN_HEIGHT, .05f, .05f );
-   
+    m_fboNoiseBG.Init( SCREEN_WIDTH, SCREEN_HEIGHT, .05f, .05f );
+    
     m_EndCutSceneTriggerTime = 0;
     m_GameTimer = 0;
 
@@ -247,6 +248,24 @@ void CGameState::DrawBullets() {
     
 }
 
+void CGameState::GenerateBackgroundNoiseImage() {
+    
+    m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
+    
+    m_fboNoiseBG.BeginDrawingToFBO();
+    glClearColor( 1.0f, 1.0f, 1.0f, 1.0f );
+    glClear( GL_COLOR_BUFFER_BIT );
+    m_pGameContext->DrawContext()->UseShaderProgram( m_pGameContext->GraphicsContext()->GetShaderIDFromIndex( 8 ) );
+    m_pGameContext->DrawContext()->Bind2DVertexBuffer();
+    m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, m_fboNoiseBG.GetOffsetX(), m_fboNoiseBG.GetOffsetY(), m_fboNoiseBG.GetWidth(), m_fboNoiseBG.GetHeight(), 1.0f, 0.0f, 0.0f, 1.0f );
+    m_pGameContext->DrawContext()->UseShaderProgram( m_pGameContext->GraphicsContext()->GetShaderIDFromIndex( 0 ) );
+    m_fboNoiseBG.EndDrawingToFBO();
+    
+    m_pGameContext->SetSpaceFogFBO( &m_fboNoiseBG );
+    
+}
+
+
 void CGameState::GenerateNoiseImage() {
     
     m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
@@ -265,6 +284,8 @@ void CGameState::GenerateNoiseImage() {
 
 }
 
+
+
 void CGameState::Draw()
 {
 
@@ -275,11 +296,13 @@ void CGameState::Draw()
         if( !generatedNoiseImage ) {
             
             GenerateNoiseImage();
+            GenerateBackgroundNoiseImage();
             generatedNoiseImage = true;
             
         }
     
         m_pGameContext->DrawStarBackground();
+        m_pGameContext->DrawSpaceFog();
         m_pGameContext->DrawSmoke();
     
     

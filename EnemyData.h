@@ -20,6 +20,8 @@ public:
 
     std::vector< float > m_GunDmg;
 	std::vector< Vector2< float > > m_GunPos;
+    std::vector< Vector2< float > > m_TrailPos;
+    std::vector< Vector3< float > > m_TrailColor;
 
 };
 

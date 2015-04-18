@@ -25,6 +25,7 @@ private:
     //CFrameBufferObject m_fboCurBullets, m_fboTrailBullets, m_fboTrailBulletsTemp;
     
     CFrameBufferObject m_fboNoiseImage;
+    CFrameBufferObject m_fboNoiseBG;
     GLuint t;
     bool m_DrawSeconds;
     long int m_NextSecondsFlash;
@@ -33,6 +34,7 @@ private:
     
     void DrawBullets();
     void GenerateNoiseImage();
+    void GenerateBackgroundNoiseImage();
     
     unsigned long int m_EndCutSceneTriggerTime;
     

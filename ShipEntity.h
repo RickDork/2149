@@ -17,14 +17,38 @@ protected:
     int m_ShipType;
     int m_LastHurtTime;
 
+    CTextureImage * m_pTrailsImage;
+    std::vector< Vector2< float > > m_TrailPositions;
+    long int m_TrailNextColorChange;
+    Vector4< float > m_TrailColor;
+    
 public:
 
-    CShipEntity() : CAIEntity(), m_Health( 100.0f ), m_MaxHealth( 100.0f ), m_Armor( 100.0f ), m_bCountAsEnemy( false ), m_NextShotTime( 0 ), m_LastHurtTime( -1 ), m_ShipType( -1 )
+    CShipEntity() : CAIEntity(), m_Health( 100.0f ), m_MaxHealth( 100.0f ), m_Armor( 100.0f ), m_bCountAsEnemy( false ), m_NextShotTime( 0 ), m_LastHurtTime( -1 ), m_ShipType( -1 ), m_pTrailsImage( NULL ), m_TrailNextColorChange( 0 )
     {
 
     }
     
     virtual ~CShipEntity() { }
+    
+    void SetTrailsImage( CTextureImage * pTex ) {
+     
+        m_pTrailsImage = pTex;
+        
+    }
+    
+    void AddTrails( float x, float y ) {
+        
+        const Vector2< int > & size = m_Sprite.GetSize();
+        m_TrailPositions.push_back( Vector2< float >( x * size.GetX(), y * size.GetY() ) );
+        
+    }
+    
+    void SetTrailColor( float r, float g, float b, float a ) {
+     
+        m_TrailColor.Set( r, g, b, a );
+        
+    }
     
     int GetShipType() {
      
@@ -158,6 +182,8 @@ public:
         return m_Health;
 
     }
+    
+    void Draw();
 
 };
 
