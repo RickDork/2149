@@ -397,7 +397,7 @@ void CGameState::Draw()
         }  
     
         glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-    
+     
         PostDrawBullets();
     
         if( m_pGameContext->ShouldDrawHUD() ) {
