@@ -423,7 +423,7 @@ void CGameState::Draw()
 
                     maxhealthbars = m_pPlayerEntity->GetMaxHealth() / 20 + 1;
                     nhealthbars = m_pPlayerEntity->GetHealth() / 20 + 1;
-                    
+                     
                 } else {
                 
                     maxhealthbars = m_pPlayerEntity->GetMaxHealth() / 15 + 1;
