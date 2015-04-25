@@ -10,8 +10,8 @@ void CSmokePlume::Init( float x, float y ) {
      
         m_Plumes[j].m_Vel.Set( Util::RandomNumber( -20, 20 ), Util::RandomNumber( -20, 20 ) );
         m_Plumes[j].m_Alpha = 70.0f;
-        
-        float rgb = Util::RandomNumber( 80, 200 ) / 255.0f;
+    
+        float rgb = Util::RandomNumber( 40, 90 ) / 255.0f;
         float size = Util::RandomNumber( 70, 110 );
         
         m_Plumes[j].m_Color = rgb;

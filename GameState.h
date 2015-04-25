@@ -26,13 +26,19 @@ private:
     
     CFrameBufferObject m_fboNoiseImage;
     CFrameBufferObject m_fboNoiseBG;
+    CFrameBufferObject m_fbo3DSpace;
+    CFrameBufferObject m_fboGameBuffer;
     GLuint t;
     bool m_DrawSeconds;
     long int m_NextSecondsFlash;
+    int m_BLTCount;
     
     long int m_GameTimer;
     
+    void PreDrawBullets();
     void DrawBullets();
+    void PostDrawBullets();
+    
     void GenerateNoiseImage();
     void GenerateBackgroundNoiseImage();
     

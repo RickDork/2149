@@ -2,6 +2,23 @@
 
 void CShipEntity::Draw() {
 
+    
+    CMatrix< float > mat;
+    mat.Identity();
+    float yoffset = 0.0f;
+    
+    if( m_bHoverEffect ) {
+        
+        yoffset = cos( m_HoverTheta * DEG2RAD ) * 5.0f;
+        m_HoverTheta += m_pContext->GetFrameDelta() * 100.0f;
+        
+        if( m_HoverTheta > 360.0f )
+            m_HoverTheta -= 360.0f;
+        
+        mat.Translate( 0.0f, yoffset, 0.0f );
+        
+    }
+    
     if( m_pTrailsImage ) {
      
         if( m_TrailPositions.size() > 0 ) {
@@ -12,7 +29,7 @@ void CShipEntity::Draw() {
             for( int j = 0; j < m_TrailPositions.size(); j++ ) {
              
                 float ox = m_TrailPositions[j].GetX();
-                float oy = m_TrailPositions[j].GetY();
+                float oy = m_TrailPositions[j].GetY() + yoffset;
                 
                 m_pContext->DrawContext()->DrawMaterial( *m_pTrailsImage, x + ox, y + oy, 30.0f, 30.0f, m_TrailColor.GetX(), m_TrailColor.GetY(), m_TrailColor.GetZ(), m_TrailColor.GetW() );
                 
@@ -37,7 +54,8 @@ void CShipEntity::Draw() {
         }
         
     }
+
     
-    BaseDraw();
+    BaseDraw( &mat );
     
 }

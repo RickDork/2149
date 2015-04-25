@@ -5,7 +5,7 @@
 #include "CoreFoundation/CoreFoundation.h"
 #endif
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 3 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f ),
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 1 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f ),
     m_bCutScene( false ), m_BossHealth( 0.0f ), m_bPlayerInvincible( false ), m_pSpaceFogFBO( NULL )
 {
     
@@ -45,6 +45,7 @@ void CTOFNContext::InitializeGraphics()
     m_pGraphicsContext->LoadShaderProgram( "funkybg.v", "funkybg2.f" );
     m_pGraphicsContext->LoadShaderProgram( "vertex.v", "noisebg.f" );
     m_pGraphicsContext->LoadShaderProgram( "vertex.v", "spacefog.f" );
+    m_pGraphicsContext->LoadShaderProgram( "vertex.v", "space3d.f" );
     
     int width, height;
 
@@ -52,7 +53,7 @@ void CTOFNContext::InitializeGraphics()
     
     m_StarEngine.Init( MAX_STARS, 1 );
 
-    for( int j = 9; j >= 0; j-- )
+    for( int j = 10; j >= 0; j-- )
     {
 
         int id = m_pGraphicsContext->GetShaderIDFromIndex( j );
@@ -131,12 +132,12 @@ void CTOFNContext::GameplayStart() {
     m_bMissionOver = false;
     m_bBossMode = false;
     m_bGameFrozen = false;
-    m_bPlayerInvincible = false;
+    m_bPlayerInvincible = true;
     m_PlayerKillCount = 0;
     
     CreatePlayerEntity();
     SetGameStartTime( SDL_GetTicks() );
-    
+   
     m_Lua.CallEngineFunction( "GameInit" );
     
 }
@@ -313,6 +314,7 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
     //ent->SetGravity( 0 );
     ent->SetPos( defaultPlayerPosX, defaultPlayerPosY );
     ent->SetDrawDepth( 1 );
+    ent->SetHoverEffect( true );
     ent->SetHealth( health );
     ent->SetMaxHealth( health );
     ent->SetArmor( 0.0f );
@@ -322,7 +324,7 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
     
     ent->SetTrailsImage( TextureFactory()->GetObjectContent( "shiptrail.png" ) );
     ent->AddTrails( .33f, .8f );
-    ent->SetTrailColor( .62, .9f, 1.0f, 1.0f );
+    ent->SetTrailColor( .52, .8f, 0.9f, 1.0f );
 
     CBoxCollisionBody * colBody = new CBoxCollisionBody;
     colBody->FitFromCenter( 80.0f, 80.0f, 64.0f, 64.0f );
@@ -811,12 +813,18 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float
         
     }
     
+    float wscale = 1.15f;
+    float hscale = 1.15f;
+    
+    float width = d.m_Width * wscale;
+    float height = d.m_Height * hscale;
+    
 	ent->SetContext( this );
     ent->SetClassTypeID( ENTTYPE_ENEMY );
     ent->SetClassType( "EN" );
   //  ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), d.m_CollisionBoxWidth, d.m_CollisionBoxHeight );
     ent->SetMaterial( m_pTextureFactory->GetObjectContent( d.m_Sprite ) );
-	ent->SetSize( d.m_Width, d.m_Height );
+	ent->SetSize( width, height );
     //ent->DisablePhysicsMovement();
     //ent->SetGravity( 0 );
 	ent->SetHealth( d.m_Health );
@@ -829,7 +837,7 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float
     aic->SetEntityContext( this );
     
     CBoxCollisionBody * colBody = new CBoxCollisionBody;
-    colBody->FitFromCenter( d.m_Width, d.m_Height, d.m_CollisionBoxWidth, d.m_CollisionBoxHeight );
+    colBody->FitFromCenter( width, height, d.m_CollisionBoxWidth, d.m_CollisionBoxHeight );
     ent->SetCollisionBody( colBody );
     
     if( type != 5 && type != 7 )
@@ -1682,7 +1690,7 @@ void CTOFNContext::DrawSpaceFog() {
         mat.Translate( 0.0f, SCREEN_HEIGHT, 0.0f );
         mat.Scale( SCREEN_WIDTH, -SCREEN_HEIGHT, 1.0f );
         
-        DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 0.1f );
+        DrawContext()->SetDrawColor( 0.8f, 0.8f, 0.8f, 0.12f );
         
         DrawContext()->Bind2DVertexArray();
         m_pSpaceFogFBO->DrawTextureDontForceSize( DrawContext(), &mat );
