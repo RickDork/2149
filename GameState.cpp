@@ -109,8 +109,28 @@ void CGameState::Input()
             if( m_GameInput.KeyDown( SDL_SCANCODE_S ) )
                 m_pPlayerEntity->Displace( 0.0f, plyMoveSpeedY * m_pGameContext->GetFrameDelta() );
             
-            m_pPlayerEntity->FitIn( 0.0f, 0.0f, SCREEN_WIDTH - 50.0f, SCREEN_HEIGHT - 100.0f );
+        if( m_pPlayerEntity->GetWrapEdges() ) {
             
+            m_pPlayerEntity->FitIn( -500.0f, 0.0f, SCREEN_WIDTH + 500.0f, SCREEN_HEIGHT - 100.0f );
+            
+            float xpos = m_pPlayerEntity->GetX();
+            float w = m_pPlayerEntity->GetSprite().GetRealSize( m_pGameContext->DrawContext() ).GetX();
+            
+            if( xpos + w <= 0.0f ) {
+             
+                xpos += SCREEN_WIDTH;
+                m_pPlayerEntity->SetPos( xpos, m_pPlayerEntity->GetY() );
+                
+            } else if( xpos > SCREEN_WIDTH ) {
+                
+                xpos -= SCREEN_WIDTH;
+                m_pPlayerEntity->SetPos( xpos, m_pPlayerEntity->GetY() );
+                
+            }
+            
+        } else
+            m_pPlayerEntity->FitIn( 0.0f, 0.0f, SCREEN_WIDTH - 50.0f, SCREEN_HEIGHT - 100.0f );
+        
         } else if( !m_pPlayerEntity ) {
          
             if( m_GameInput.KeyDown( SDL_SCANCODE_RETURN ) ) {

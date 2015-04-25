@@ -55,7 +55,29 @@ void CShipEntity::Draw() {
         
     }
 
+
+    
+    if( m_bWrapEdges ) {
+        
+        float xpos = m_Position.GetX();
+        float realw = m_Sprite.GetRealSize( m_pContext->DrawContext() ).GetX();
+        CMatrix< float > copyMat = mat;
+        
+        if( xpos < 0.0f ) {
+            
+            copyMat.Translate( SCREEN_WIDTH + xpos, m_Position.GetY(), 0.0f );
+            BaseDraw( &copyMat, true );
+            
+        } else if( xpos + realw > SCREEN_WIDTH ) {
+            
+            copyMat.Translate( xpos - SCREEN_WIDTH, m_Position.GetY(), 0.0f );
+            BaseDraw( &copyMat, true );            
+            
+        }
+        
+    }
     
     BaseDraw( &mat );
+
     
 }

@@ -2,6 +2,7 @@
 #define SHIPENTITY_H_
 
 #include "SoraIncludes.h"
+#include "Define.h"
 
 class CShipEntity : public CAIEntity
 {
@@ -25,18 +26,32 @@ protected:
     bool m_bHoverEffect;
     float m_HoverTheta;
     
+    bool m_bWrapEdges;
+    
 public:
 
-    CShipEntity() : CAIEntity(), m_Health( 100.0f ), m_MaxHealth( 100.0f ), m_Armor( 100.0f ), m_bCountAsEnemy( false ), m_NextShotTime( 0 ), m_LastHurtTime( -1 ), m_ShipType( -1 ), m_pTrailsImage( NULL ), m_TrailNextColorChange( 0 ), m_bHoverEffect( false ), m_HoverTheta( 0.0f )
+    CShipEntity() : CAIEntity(), m_Health( 100.0f ), m_MaxHealth( 100.0f ), m_Armor( 100.0f ), m_bCountAsEnemy( false ), m_NextShotTime( 0 ), m_LastHurtTime( -1 ), m_ShipType( -1 ), m_pTrailsImage( NULL ), m_TrailNextColorChange( 0 ), m_bHoverEffect( false ), m_HoverTheta( 0.0f ), m_bWrapEdges( false )
     {
 
     }
     
     virtual ~CShipEntity() { }
     
+    bool GetWrapEdges() {
+     
+        return m_bWrapEdges;
+        
+    }
+    
     void SetHoverEffect( bool b ) {
      
         m_bHoverEffect = b;
+        
+    }
+    
+    void SetWrapEdges( bool b ) {
+     
+        m_bWrapEdges = b;
         
     }
     
