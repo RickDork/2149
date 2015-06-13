@@ -8,6 +8,8 @@ function LEVEL.Init()
         
     end   
     
+    Game.PlayMusic( "rtj.mp3" );
+    
     startScene();
     
 

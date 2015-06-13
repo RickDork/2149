@@ -73,4 +73,8 @@ function ENGINE.Draw()
     drawDialogue();
     drawTimedText();
     
+    if( LEVEL.PostDraw ) then
+       LEVEL.PostDraw(); 
+    end
+    
 end

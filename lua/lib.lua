@@ -101,7 +101,7 @@ function addTimedText( font, size, text, duration, x, y, r, g, b, a, horiz, vert
                                   x = x, y = y, r = r, g = g, b = b, a = a,
                                   NextFlash = 0, Flashing = false, Delayed = false, Fade = false,
                                   Speed = 0, Showing = true, KillTime = GetTicks() + duration,
-                                  CenterHoriz = horiz or false, CenterVert = vert or false };
+                                  CenterHoriz = horiz or false, CenterVert = vert or false, sound = false };
       
     return id;
     
@@ -118,6 +118,13 @@ function fitTimedText( i, width )
     timedText[i].Text = ftext;
     
 end
+
+function addSoundToTimedText( i )
+   
+    timedText[i].sound = true;
+    
+end
+
 
 function addFadeToTimedText( i, delay, speed )
    
@@ -152,12 +159,21 @@ DIALOG_PROFILE_GASTON2 = "playerprofile2.png";
 DIALOG_PROFILE_SCIENTIST = "scientistprofile.png";
 DIALOG_PROFILE_KALMIYA = "aiprofile.png";
 DIALOG_PROFILE_SQUADMATE = "squadmateprofile.png";
+DIALOG_PROFILE_DAD = "dadprofile.png";
+DIALOG_PROFILE_DAUGHTER = "daughterprofile.png";
 DIALOG_FONT_DELAY = 40;
 DIALOG_FONT_SIZE = 24;
+
+FinaleDialogueToggle = false;
 
 function addDialogueText( profile, text, delay, initialdelay, size, textdelay )
    
     initialdelay = initialdelay or 0;
+    
+    if( FinaleDialogueToggle ) then
+       textdelay = 75;
+        DIALOG_DEFAULT_Y = .85;
+    end
     
     addTimer( initialdelay, function() 
 
@@ -235,7 +251,7 @@ function addDialogueText( profile, text, delay, initialdelay, size, textdelay )
 
                                 timedText[t].DoNotDraw = true;
                                 timedText[t].DelayNextChar = timedText[t].DelayNextChar + 400;
-
+                                timedText[t].sound = true;
 
                                 table.insert( dialogue, { timedTextId = t, timedText = timedText[t], profileImage = profile, endTime = endtime + GetTicks(), x = x, y = y, yoffset = 100, a = 0, offsetSpeed = 270, rBack = rBack, gBack = gBack, bBack = bBack, rFore = rFore, gFore = gFore, bFore = bFore, Text = text } );
                     
@@ -258,8 +274,20 @@ function drawDialogue()
 
                 local width = Game.ScreenWidth() * DIALOG_DEFAULT_WIDTH;
                 --Draw.DrawTexture( "pixel.png", v.x - 150, v.y - 14 + v.yoffset, width, 128, v.rBack, v.gBack, v.bBack, v.a );
-                Draw.DrawTexture( "pixel.png", v.x - 16, v.y - 8 + v.yoffset, width - 120, 145, v.rFore, v.gFore, v.bFore, v.a );
-                Draw.DrawTexture( v.profileImage, v.x - 160, v.y - 8 + v.yoffset, 138, 145, 255, 255, 255, v.a );
+                
+                if( not FinaleDialogueToggle ) then
+                    Draw.DrawTexture( "pixel.png", v.x - 16, v.y - 8 + v.yoffset, width - 120, 145, v.rFore, v.gFore, v.bFore, v.a );
+                end
+                
+                local miscoffset = 0;
+                
+                if( FinaleDialogueToggle ) then
+                   
+                    miscoffset = 35;
+                    
+                end
+                
+                Draw.DrawTexture( v.profileImage, v.x - 160, v.y - 8 + v.yoffset - miscoffset, 138, 145, 255, 255, 255, v.a );
 
                 
                 v.timedText.KillTime = t.KillTime + 1000;
@@ -318,7 +346,11 @@ function drawTimedText()
 
                     timedText[k].DelayNextChar = v.DelayTime + GetTicks();
                     timedText[k].DelayPos = v.DelayPos + 1;
-
+                    
+                    if( v.sound ) then
+                        Game.PlaySound( "bullet.wav", .3 );
+                    end
+                    
                 end
 
             end

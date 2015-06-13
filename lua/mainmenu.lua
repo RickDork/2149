@@ -6,10 +6,14 @@ function ENGINE.StartIntro()
     
     ENGINE.IntroOn = true;
     
+    Game.FadeVolume( 2000, 1, 0 );
+    
     addTimer( 3000, function()
                         local t = addTimedText( FONT_MC, 32, "It is the year 2149.", 35000, 10, 10, 1, 1, 1, 1 );
                         addDelayToTimedText( t, 30 );
                         addFadeToTimedText( t, 26000, 150 );
+                        Game.PlayMusic( "intro.mp3", .1 );
+                        Game.FadeVolume( 1000, .1, 1 );
                     end );
     
     addTimer( 6000, function()
@@ -35,6 +39,7 @@ function ENGINE.StartIntro()
                         t = addTimedText( FONT_MC, 32, "Welcome to the UNSD.", 35000, Game.ScreenWidth() * .5, 650, 1, 1, 1, 1, true );
                         addDelayToTimedText( t, 30 );
                         addFadeToTimedText( t, 9000, 150 );
+                        Game.FadeVolume( 11000, 1, 0 );
                     end );
     
     addTimer( 36000, function()

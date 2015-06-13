@@ -9,6 +9,8 @@ function LEVEL.Init()
         
     end   
     
+    Game.PlayMusic( "rtj2.mp3" );
+    
     startScene();
      
     hookEvent( GetTicks() + 3000,

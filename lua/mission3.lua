@@ -8,6 +8,8 @@ LEVEL.MarthusSpeechOn = false;
 
 function LEVEL.Init()
     
+    Game.PlayMusic( "rtj3.mp3" );
+    
     if( Game.GetRetryCount() > 0 ) then
 
         LEVEL.StartMission();
@@ -16,7 +18,6 @@ function LEVEL.Init()
     end
     
     startScene();
-    
 
     hookEvent( GetTicks() + 3000,
             function()
@@ -89,6 +90,7 @@ function LEVEL.BossDeath()
     if( not LEVEL.HandledBossDeath ) then
        
         LEVEL.HandledBossDeath = true;
+        Game.FadeOutMusic( 4000 );
         
         for n = 1, 30 do
            
@@ -97,6 +99,12 @@ function LEVEL.BossDeath()
             addTimer( n * 250, function() Game.CreateExplosions( 5, n * 50 + math.random( -50, 50 ), math.random( 60, 160 ) ) end );
             
         end
+        
+        addTimer( 9000, function()  
+        
+            Game.ClearAllEnemies();
+                
+        end );
        
         Draw.SetDrawHUD( false );
         Game.TogglePlayerInput( false );
@@ -113,6 +121,15 @@ function LEVEL.BossDeath()
 
         addDialogueText( DIALOG_PROFILE_GASTON2, "... Am I dead?", 3000, 11000 );
         addDialogueText( DIALOG_PROFILE_SCIENTIST, "No.", 3000, 17000 );
+        
+        addTimer( 17000, function() 
+            
+            Game.PlayMusic( "g.mp3", .1 );
+            Game.FadeVolume( 4000, .1, 3 );
+                
+                
+        end );
+        
         addTimer( 19000, function() LEVEL.DrawTalkScene = true; end );
         
         addDialogueText( DIALOG_PROFILE_GASTON2, "Where are we?", 3000, 23000 );
@@ -132,14 +149,20 @@ function LEVEL.BossDeath()
         addTimer( 65000, function() LEVEL.FunkyBG2 = true; end );
         addDialogueText( DIALOG_PROFILE_SCIENTIST, ".. or we go extinct in under five years.", 3000, 71000 );
         addDialogueText( DIALOG_PROFILE_GASTON2, "But..", 3000, 77000 );
-        addDialogueText( DIALOG_PROFILE_GASTON2, "Is it human?  Does it have thoughts? Memories?", 3000, 81000 );           
+        addDialogueText( DIALOG_PROFILE_GASTON2, "The clone.. is it human?  Does it have thoughts? Memories?", 3000, 81000 );           
         addDialogueText( DIALOG_PROFILE_SCIENTIST, "No.", 3000, 88000 );   
         addDialogueText( DIALOG_PROFILE_GASTON2, "...", 3000, 90000 ); 
         addDialogueText( DIALOG_PROFILE_SCIENTIST, "Well?", 3000, 95000 ); 
         addDialogueText( DIALOG_PROFILE_GASTON2, "...", 3000, 97000 ); 
         addDialogueText( DIALOG_PROFILE_SCIENTIST, "What\'s the matter?", 3000, 101000 ); 
-        addDialogueText( DIALOG_PROFILE_GASTON2, "What year is it?", 3000, 107000 ); 
-        addTimer( 113000, function() nextMission(); end );
+        addDialogueText( DIALOG_PROFILE_GASTON2, "What year is it?", 10000, 109000 ); 
+        addTimer( 114000, function()     
+                            events = { }
+                            timedText = { }
+                            timers = { }
+                            dialogue = { }
+                            nextMission(); 
+                        end );
     end
 
     
@@ -183,6 +206,7 @@ function LEVEL.Draw()
                 local i = addTimedText( FONT_MC, 24, "Greetings to all UNSD warriors today!  I just want to commend all of you on a job well done.  With all of your efforts we have retaken many of our colonies, and pushed back the UEA even further.\n\nI know it has been a difficult eight years and I know you want nothing more than to go home to your families, however, just know that your work today means a future for your friends and families for tomorrow..", 35500, Game.ScreenWidth() * .15, Game.ScreenHeight() * .25 + 140, 1, 1, 1, 1, false, false );
                 addDelayToTimedText( i, 60 );
                 addFadeToTimedText( i, 30500, 100 );
+                --addSoundToTimedText( i );
                 
                 fitTimedText( i, Game.ScreenWidth() * .8 );
                 
@@ -319,43 +343,54 @@ function LEVEL.StartMission()
                     end
                 Game.SetMaxEnemyCount( 10 );
                 Game.AddToGenQueue( 1, .6 );
+        
             end );
     
     
      hookEvent( 20000, 
             function() 
+                if( not LEVEL.HandledBossDeath ) then
                 for j=1,4 do
                         Game.GenerateEnemy( true, 5 );
                     end
                 Game.AddToGenQueue( 3, .2 );
+            
                 Game.SetMaxEnemyCount( 25 );
+                end
             end );   
 
      hookEvent( 35000, 
             function() 
-                for j=1,4 do
-                        Game.GenerateEnemy( true, 5 );
-                    end
-                Game.SetMaxEnemyCount( 25 );
+                if( not LEVEL.HandledBossDeath ) then
+                    for j=1,4 do
+                            Game.GenerateEnemy( true, 5 );
+                        end
+                    Game.SetMaxEnemyCount( 25 );
+                end
             end );
     
      hookEvent( 45000, 
             function() 
+                if( not LEVEL.HandledBossDeath ) then
                 for j=1,2 do
                         Game.GenerateEnemy( true, 7 );
                     end
                 Game.SetMaxEnemyCount( 5 );
                 Game.AddToGenQueue( 8, .1 );
+                end
             end );
      hookEvent( 60000, 
-            function() 
+            function()
+                if( not LEVEL.HandledBossDeath ) then
                 Game.SetMaxEnemyCount( 20 );
+                end
             end );
      hookEvent( 90000, 
             function() 
                 Game.SetMaxEnemyCount( 0 );
                 Game.ClearGenQueue();
             end );
+    --[[
      hookEvent( 97000, 
             function() 
                 if( Game.GetEnemyCount() < 1 ) then
@@ -366,6 +401,7 @@ function LEVEL.StartMission()
                 end
                 return true;
             end, false, true );
+    ]]--
     
     
 end
