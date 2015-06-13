@@ -17,12 +17,24 @@ void CGameState::Init()
     //m_fboTrailBullets.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
     //m_fboTrailBulletsTemp.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
     
-    m_BulletTrails.Init( m_pGameContext->DrawContext(), SCREEN_WIDTH, SCREEN_HEIGHT, .98f );
+    m_BulletTrails.Init( m_pGameContext->DrawContext(), SCREEN_WIDTH, SCREEN_HEIGHT, .95f );
     m_fboNoiseImage.Init( SCREEN_WIDTH, SCREEN_HEIGHT, .05f, .05f );
     m_fboNoiseBG.Init( SCREEN_WIDTH, SCREEN_HEIGHT, .05f, .05f );
     m_fbo3DSpace.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
     m_fboGameBuffer.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
+    m_fboShips.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
+    m_fboShipsHorizPassThru.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
+    m_fboExplosions.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
+    m_fboSpaceFog.Init( SCREEN_WIDTH, SCREEN_HEIGHT );
     
+    for( int j = 0; j < 5; j++ ) {
+     
+        m_TrippyTrails[j].Init();
+        
+    }
+  
+    m_CurTrippyTrailFrame = 0;
+    m_NextTrippyTrailFrameTime = 0;
     m_EndCutSceneTriggerTime = 0;
     m_GameTimer = 0;
     m_BLTCount = 0;
@@ -103,12 +115,16 @@ void CGameState::Input()
             if( m_GameInput.KeyDown( SDL_SCANCODE_D ) )
                 m_pPlayerEntity->Displace( plyMoveSpeedX * m_pGameContext->GetFrameDelta(), 0.0f );
 
-            if( m_GameInput.KeyDown( SDL_SCANCODE_W ) )
-                m_pPlayerEntity->Displace( 0.0f, -1.0f * plyMoveSpeedY * m_pGameContext->GetFrameDelta() );
+            if( m_pGameContext->GetCurrentMission() != 4 ) {
+        
+                if( m_GameInput.KeyDown( SDL_SCANCODE_W ) )
+                    m_pPlayerEntity->Displace( 0.0f, -1.0f * plyMoveSpeedY * m_pGameContext->GetFrameDelta() );
 
-            if( m_GameInput.KeyDown( SDL_SCANCODE_S ) )
-                m_pPlayerEntity->Displace( 0.0f, plyMoveSpeedY * m_pGameContext->GetFrameDelta() );
-            
+                if( m_GameInput.KeyDown( SDL_SCANCODE_S ) )
+                    m_pPlayerEntity->Displace( 0.0f, plyMoveSpeedY * m_pGameContext->GetFrameDelta() );
+                
+            }
+                
         if( m_pPlayerEntity->GetWrapEdges() ) {
             
             m_pPlayerEntity->FitIn( -500.0f, 0.0f, SCREEN_WIDTH + 500.0f, SCREEN_HEIGHT - 100.0f );
@@ -234,6 +250,9 @@ void CGameState::Think()
 }
 
 void CGameState::PreDrawBullets() {
+    
+    if( m_pGameContext->IsGameFrozen() )
+        return;
 
     int b1 = 0, b2 = 0;
     
@@ -252,6 +271,8 @@ void CGameState::PreDrawBullets() {
 
 void CGameState::PostDrawBullets() {
     
+    if( m_pGameContext->IsGameFrozen() )
+        return;
     
     m_BulletTrails.BeginDrawToAccumBuffer();
     if( m_BLTCount > 0 ) {
@@ -259,7 +280,7 @@ void CGameState::PostDrawBullets() {
         m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
         m_BulletTrails.DrawCurrentBuffer();
         
-    } else{
+    } else {
         
         glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
         glClear( GL_COLOR_BUFFER_BIT );
@@ -337,19 +358,125 @@ void CGameState::Draw()
     
         PreDrawBullets();
     
+        m_fboExplosions.BeginDrawingToFBO();
+            glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
+            glClear( GL_COLOR_BUFFER_BIT );     
+            m_pGameContext->DrawExplosions();
+        m_fboExplosions.EndDrawingToFBO();
+    
+        glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
+        m_fboShips.BeginDrawingToFBO();
+            glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
+            glClear( GL_COLOR_BUFFER_BIT ); 
+            m_pGameContext->EntityManager()->DrawAllEntitiesAtDepth( 1 );
+        m_fboShips.EndDrawingToFBO();
+        glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+    
+        m_fboSpaceFog.BeginDrawingToFBO();
+            glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
+            glClear( GL_COLOR_BUFFER_BIT ); 
+            m_pGameContext->DrawSpaceFog( m_fboExplosions.GetTexture() );
+        m_fboSpaceFog.EndDrawingToFBO();
+
+        m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
+    
+        m_pGameContext->GraphicsContext()->UseShader( 11 );
+        glActiveTexture( GL_TEXTURE1 );
+        m_fboExplosions.BindTexture();
+        int l = glGetUniformLocation( m_pGameContext->GraphicsContext()->GetShaderIDFromIndex( 11 ), "texUnit2" );
+        glUniform1i( l, 1 );
+        glActiveTexture( GL_TEXTURE0 );
+        m_fboShipsHorizPassThru.BeginDrawingToFBO();
+            glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
+            glClear( GL_COLOR_BUFFER_BIT ); 
+            m_fboShips.DrawTexture( m_pGameContext->DrawContext() );
+        m_fboShipsHorizPassThru.EndDrawingToFBO();
+    
+        m_pGameContext->GraphicsContext()->UseShader( 12 );
+        l = glGetUniformLocation( m_pGameContext->GraphicsContext()->GetShaderIDFromIndex( 12 ), "texUnit2" );
+        glUniform1i( l, 1 );
+        
+        m_fboShips.BeginDrawingToFBO();
+            glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
+            glClear( GL_COLOR_BUFFER_BIT ); 
+            m_fboShipsHorizPassThru.DrawTexture( m_pGameContext->DrawContext() );
+        m_fboShips.EndDrawingToFBO();
+    
+        if( m_pGameContext->GetCurrentMission() == 4 ) {
+        
+            if( SDL_GetTicks() > m_NextTrippyTrailFrameTime ) {
+                
+                m_pGameContext->GraphicsContext()->UseShader( 13 );
+                m_TrippyTrails[m_CurTrippyTrailFrame].GetFBO().BeginDrawingToFBO();
+                glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
+                glClear( GL_COLOR_BUFFER_BIT ); 
+                m_pGameContext->DrawStarBackground();
+                m_fboShips.DrawTexture( m_pGameContext->DrawContext() );
+                m_TrippyTrails[m_CurTrippyTrailFrame].GetFBO().EndDrawingToFBO();
+        
+                m_TrippyTrails[m_CurTrippyTrailFrame].GenerateRandomColor();
+                m_TrippyTrails[m_CurTrippyTrailFrame].GenerateRandomPos();
+                
+                m_NextTrippyTrailFrameTime = SDL_GetTicks() + Util::RandomNumber( 10, 100 );
+                
+                if( ++m_CurTrippyTrailFrame >= 5 )
+                    m_CurTrippyTrailFrame = 0;
+                
+            }
+            
+        }
+        
         m_fboGameBuffer.BeginDrawingToFBO();
         
         glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
         glClear( GL_COLOR_BUFFER_BIT );
     
-        m_pGameContext->DrawStarBackground();
-        m_pGameContext->DrawSpaceFog();
+        m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
+    
+        if( m_pGameContext->GetCurrentMission() != 4 || m_pGameContext->EndingTriggered() )
+            m_pGameContext->DrawStarBackground();
+    
+        m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
+    
+        m_fboSpaceFog.DrawTexture( m_pGameContext->DrawContext() );
         m_pGameContext->DrawSmoke();
     
         if( m_pGameContext->GetBossMode() )
             DrawBullets();
     
-        m_pGameContext->EntityManager()->DrawAllEntitiesAtDepth( 1 );
+        m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
+        
+    
+        if( m_pGameContext->GetCurrentMission() == 4 && !m_pGameContext->EndingTriggered() ) { 
+            
+            static float blackHoleHeight = 0.0f;
+            float speed = 3.5f;
+            
+            
+            if( blackHoleHeight > 340.0f )
+                speed = 6.0f;
+            
+            blackHoleHeight += speed * m_pGameContext->GetFrameDelta();
+            
+            m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, 0.0f, 0.0f, SCREEN_WIDTH, blackHoleHeight, 0.0f, 0.0f, 0.0f, 1.0f );
+         
+            m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
+            
+        }
+    
+        if( m_pGameContext->GetCurrentMission() == 4 && !m_pGameContext->EndingTriggered() ) {
+        
+            for( int j = 0; j < 5; j++ ) {
+             
+                m_TrippyTrails[j].Draw( m_pGameContext->DrawContext() );
+                
+            }
+            
+        }
+    
+        m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
+        
+        m_fboShips.DrawTexture( m_pGameContext->DrawContext() );
         m_pGameContext->EntityManager()->DrawAllEntitiesAtDepth( 2 );
    
     
@@ -391,8 +518,10 @@ void CGameState::Draw()
     
    // m_pGameContext->DrawContext()->DrawGLTexture( texture, 0.0f, 10.0f, 20000.0f, 128.0f, 1.0f, 1.0f, 1.0f, 1.0f );
     
-        m_pGameContext->DrawExplosions();
     
+        m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
+        m_fboExplosions.DrawTexture( m_pGameContext->DrawContext() );    
+        
         m_fboGameBuffer.EndDrawingToFBO();
         
         m_pGameContext->GraphicsContext()->ClearBuffer();
@@ -403,14 +532,18 @@ void CGameState::Draw()
     
         if( SDL_GetTicks() > renderDelay ) { 
             
-            m_pGameContext->GraphicsContext()->UseShader( 0 );
+            int renderShader = 0;
+            
+            if( m_pGameContext->GetCurrentMission() == 4 && !m_pGameContext->EndingTriggered() )
+                renderShader = 10;
+            
+            m_pGameContext->GraphicsContext()->UseShader( renderShader );
             m_pGameContext->DrawContext()->Bind2DVertexArray();
         
             
             m_pGameContext->DrawContext()->SetDrawColor( 1.0f, 1.0f, 1.0f, 1.0f );
             m_fboGameBuffer.DrawTexture( m_pGameContext->DrawContext() );
             
-          
             m_pGameContext->GraphicsContext()->UseShader( 0 );
             m_pGameContext->DrawContext()->Bind2DVertexArray();
             

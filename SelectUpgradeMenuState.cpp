@@ -45,6 +45,8 @@ void CSelectUpgradeMenuState::OnStateSwitch() {
  
     m_pGameContext->SetStarFieldComingAtYou( true );
     m_pGameContext->CreateStarBackground();
+    m_pGameContext->StopMusic();
+    
     
     m_bShowPlayerEXP = false;
     m_bSelectOne = true;
@@ -67,6 +69,13 @@ void CSelectUpgradeMenuState::OnStateSwitch() {
         
     }
     
+    if( m_bSelectOne ) {
+     
+        m_pGameContext->PlayMusic( "win.mp3", .1f );
+        m_pGameContext->FadeMusic( 3000, .1f, 1.0f );
+        
+    } else
+        m_pGameContext->PlayMusic( "win.mp3", 1.0f );
     
 }
 

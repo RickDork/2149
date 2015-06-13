@@ -13,7 +13,7 @@ CGame::CGame()
 
     m_GraphicsContext.SetDrawContext( &m_DrawContext );
     
-    m_GraphicsContext.CreateHandle( "2149", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, false );
+    m_GraphicsContext.CreateHandle( "2149", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, true );
     m_GraphicsContext.SetDrawMode( DrawMode::DRAW_MODE_2D );
     
     int shaderID = m_GraphicsContext.LoadShaderProgram( "vertex.v", "fragment.f" );
@@ -36,9 +36,16 @@ CGame::CGame()
     
     Log::Debug( "Font Context initialized" );
     
+    m_SoundContext.Init( 64 );
+    m_SoundFactory.SetFMODSystem( m_SoundContext.GetSystem() );
+    
+    Log::Debug( "Sound Context initialized" );
+    
     m_GameContext.SetGraphicsContext( &m_GraphicsContext );
     m_GameContext.SetDrawContext( &m_DrawContext );
     m_GameContext.SetEntityManager( &m_EntityManager );
+    m_GameContext.SetSoundContext( &m_SoundContext );
+    m_GameContext.SetSoundFactory( &m_SoundFactory );
     m_GameContext.SetTextureFactory( &m_TextureFactory );
     m_GameContext.SetFTContext( &m_FTContext );
     m_GameContext.SetFontFactory( &m_FontFactory );

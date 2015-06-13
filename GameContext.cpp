@@ -5,8 +5,8 @@
 #include "CoreFoundation/CoreFoundation.h"
 #endif
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 1 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f ),
-    m_bCutScene( false ), m_BossHealth( 0.0f ), m_bPlayerInvincible( false ), m_pSpaceFogFBO( NULL )
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 3 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f ),
+    m_bCutScene( false ), m_BossHealth( 0.0f ), m_bPlayerInvincible( false ), m_pSpaceFogFBO( NULL ), m_bEnding( false ), m_NextBulletSound( 0 )
 {
     
     m_QuadTree.Init( 0, -100, 1200 );
@@ -46,6 +46,9 @@ void CTOFNContext::InitializeGraphics()
     m_pGraphicsContext->LoadShaderProgram( "vertex.v", "noisebg.f" );
     m_pGraphicsContext->LoadShaderProgram( "vertex.v", "spacefog.f" );
     m_pGraphicsContext->LoadShaderProgram( "vertex.v", "space3d.f" );
+    m_pGraphicsContext->LoadShaderProgram( "horizblur.v", "horizblur.f" );
+    m_pGraphicsContext->LoadShaderProgram( "vertblur.v", "vertblur.f" );
+    m_pGraphicsContext->LoadShaderProgram( "vertex.v", "solidwhite.f" );
     
     int width, height;
 
@@ -53,7 +56,7 @@ void CTOFNContext::InitializeGraphics()
     
     m_StarEngine.Init( MAX_STARS, 1 );
 
-    for( int j = 10; j >= 0; j-- )
+    for( int j = 13; j >= 0; j-- )
     {
 
         int id = m_pGraphicsContext->GetShaderIDFromIndex( j );
@@ -112,8 +115,76 @@ void CTOFNContext::GetCurrentSelectableUpgrades() {
     
 }
 
+void CTOFNContext::TriggerEnding() {
+    
+
+    for( int j = 0; j < 64; j++ ){
+    
+        FMOD::Channel * pChannel;
+        
+        if( SoundContext()->GetSystem()->getChannel( j, &pChannel ) == FMOD_OK ) {
+        
+            pChannel->stop();
+            
+        }
+        
+    }
+    
+    int n = 0;
+    for( ; n < MAX_STARS; n++ )
+    {
+        
+        CStar * s = &m_pStars[n];
+        s->m_Speed = Util::RandomNumber( 90, 135 );
+        
+    }
+    
+    m_bEnding = true;
+    m_pEntityManager->RemoveAllQueuedEntities();
+    m_pEntityManager->RemoveAllDeletedEntities();
+    m_pEntityManager->RemoveAllEntities();
+    
+    m_pSmokePlumes.clear();
+    m_pExplosions.clear();
+    
+    m_pPlayerEntity = NULL;
+    m_CurEnemyCount = 0;
+    m_MaxEnemyCount = 0;
+    m_EnemyGenQueue.clear();
+    m_MaxGenQueueProbability = 0;
+    m_NextEnemySpawn = 0;
+    CreatePlayerEntity();
+    
+}
+
+void CTOFNContext::ClearAllEnemies() {
+ 
+    
+    m_pEntityManager->RemoveAllDeletedEntities();
+    
+    boost::ptr_vector< CEntityObject > & e = m_pEntityManager->GetEntityObjects();
+    boost::ptr_vector< CEntityObject >::iterator iter = e.begin();
+    boost::ptr_vector< CEntityObject >::iterator end = e.end();
+    
+    while( iter != end ) {
+    
+        CEntity * ent = ( *iter ).GetContent();
+        
+        if( ent->GetClassType() == "EN" ) {
+         
+            m_pEntityManager->DeleteEntity( ent );
+            
+        } 
+        
+        iter++;
+        
+    }
+    
+}
+
 void CTOFNContext::GameplayStart() {
  
+    m_pEntityManager->RemoveAllQueuedEntities();
     m_pEntityManager->RemoveAllDeletedEntities();
     m_pEntityManager->RemoveAllEntities();
     
@@ -132,7 +203,13 @@ void CTOFNContext::GameplayStart() {
     m_bMissionOver = false;
     m_bBossMode = false;
     m_bGameFrozen = false;
-    m_bPlayerInvincible = true;
+    
+   // if( m_CurrentMission == 4 )
+        m_bPlayerInvincible = true;
+  
+    this->GiveUpgrade( 7, 0 );
+    this->GiveUpgrade( 8, 0 );
+    
     m_PlayerKillCount = 0;
     
     CreatePlayerEntity();
@@ -284,13 +361,39 @@ void CTOFNContext::RemoveUpgrade( int type, int cost ) {
     
 }
 
+void CTOFNContext::ExplodePlayer() {
+    
+    const Vector2< float > & pos = m_pPlayerEntity->GetPos();
+    Vector2< int > size = m_pPlayerEntity->GetSize();
+    
+    CreateExplosionsAndSmoke( 0, pos.GetX() + ( float )size.GetX() * .5f, pos.GetY() + ( float )size.GetY() * .5f );
+    m_pPlayerEntity->SetDraw( false );
+    
+}
 
 CShipEntity * CTOFNContext::CreatePlayerEntity()
 {
 
-    static const float defaultPlayerPosX = 350.0f;
-    static const float defaultPlayerPosY = 500.0f;
+    static float defaultPlayerPosX = 350.0f;
+    static float defaultPlayerPosY = 500.0f;
 
+    if( m_CurrentMission == 4 ) {
+     
+        if( m_bEnding ) {
+            
+            
+            defaultPlayerPosX = 230.0f;
+            defaultPlayerPosY = 450.0f;            
+            
+        } else {
+        
+            defaultPlayerPosX = 730.0f;
+            defaultPlayerPosY = 250.0f;
+        
+        }
+        
+    }
+    
 	Log::Debug( "Creating player entity" );
     
     float gunDmg = 5.0f;
@@ -304,12 +407,21 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
     else if( HasUpgrade( 1 ) )
         health = 225.0f;
     
+    
     CShipEntity * ent = new CShipEntity;
 	ent->SetContext( this );
     ent->SetClassTypeID( ENTTYPE_PLAYER );
 	//ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 64, 64 );
-    ent->SetMaterial( m_pTextureFactory->GetObjectContent( "player2.png" ) );
-	ent->SetSize( 80, 80 );
+    
+    if( m_CurrentMission == 4 && !m_bEnding ) {
+        ent->SetMaterial( m_pTextureFactory->GetObjectContent( "player3.png" ) );
+        ent->SetWrapEdges( true );
+    } else {
+        ent->SetMaterial( m_pTextureFactory->GetObjectContent( "player2.png" ) );
+        ent->SetWrapEdges( false );
+    }
+    
+    ent->SetSize( 80, 80 );
     //ent->DisablePhysicsMovement();
     //ent->SetGravity( 0 );
     ent->SetPos( defaultPlayerPosX, defaultPlayerPosY );
@@ -421,6 +533,10 @@ void CTOFNContext::CreateExplosionsAndSmoke( int count, int type, float x, float
         CreateSmokePlume( x + tx * .8f, y + ty * .8f );
         
     }
+    
+    FMOD::Channel * exp = SoundContext()->PlaySound( SoundFactory()->GetSound( "explosion.wav" ));
+    exp->setPitch( ( float )Util::RandomNumber( 75, 150 ) / 100.0f );
+    exp->setVolume( ( float )Util::RandomNumber( 75, 150 ) / 100.0f );
     
 }
 
@@ -593,6 +709,17 @@ CAIEntity * CTOFNContext::FireBulletFrom( int type, float x, float y, float dmg,
         m_pEntityManager->AddEntity( ent );
         m_QuadTree.AddEntity( ent );
     }
+    
+    if( SDL_GetTicks() > m_NextBulletSound ) {
+        
+        FMOD::Channel * blt = SoundContext()->PlaySound( SoundFactory()->GetSound( "bullet.wav" ));
+        //blt->setPitch( ( float )Util::RandomNumber( 75, 150 ) / 100.0f );
+        blt->setVolume( .2f );
+        
+        m_NextBulletSound = SDL_GetTicks() + Util::RandomNumber( 50, 100 );
+        
+    }
+        
     
     return ent;
 
@@ -816,6 +943,12 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float
     float wscale = 1.15f;
     float hscale = 1.15f;
     
+    if( type == 9 ) {
+     
+        wscale = hscale = 1.0f;
+        
+    }
+    
     float width = d.m_Width * wscale;
     float height = d.m_Height * hscale;
     
@@ -848,6 +981,23 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float
         
         aic->SetSpeed( xvel, speed );
     
+    }
+    
+    if( type == 9 ) {
+     
+        float mul = 1.0f;
+        
+        if( HasUpgrade( 9 ) )
+            mul += 1.0f;
+        
+        if( HasUpgrade( 8 ) )
+            mul += 1.0f;
+        else if( HasUpgrade( 3 ) )
+            mul += .5f;
+        
+        ent->SetHealth( mul * d.m_Health );
+        ent->SetMaxHealth( mul * d.m_Health );
+        
     }
     
     aic->SetEnemyType( type );
@@ -1035,6 +1185,52 @@ void CTOFNContext::DestroyShip( CShipEntity * e, bool quiet )
 
 }
 
+void CTOFNContext::FadeMusic( int fade, float volume, float volume2 ) {
+ 
+    if( m_pCurMusChannel ) {
+     
+        unsigned long long clock;
+        m_pCurMusChannel->getDSPClock( NULL, &clock );
+        
+        m_pCurMusChannel->addFadePoint( clock, volume );
+        m_pCurMusChannel->addFadePoint( clock + fade, volume2 );
+        
+    }
+    
+}
+
+void CTOFNContext::StopMusic() { 
+ 
+    if( m_pCurMusChannel )
+        m_pCurMusChannel->stop();
+    
+}
+
+void CTOFNContext::PlayMusic( std::string dir, float volume ) {
+    
+    StopMusic();
+    
+    m_pCurMusChannel = SoundContext()->PlaySound( SoundFactory()->GetSound( dir ) );
+    m_pCurMusChannel->setVolume( volume );
+    
+}
+
+
+void CTOFNContext::PlayMusic( std::string dir ) {
+ 
+    StopMusic();
+    
+    m_pCurMusChannel = SoundContext()->PlaySound( SoundFactory()->GetSound( dir ) );
+    
+}
+
+void CTOFNContext::PlaySound( std::string dir, float vol ) {
+    
+    FMOD::Channel * c = SoundContext()->PlaySound( SoundFactory()->GetSound( dir ) );
+    c->setVolume( vol );
+    
+}
+
 void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pEntityB, int entTypeB )
 {
 
@@ -1119,6 +1315,12 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
                 mul = 2.5f;
             else if( HasUpgrade( 5 ) )
                 mul = 1.5f;
+            
+            
+            FMOD::Channel * blt = SoundContext()->PlaySound( SoundFactory()->GetSound( "bullet.wav" ));
+            blt->setPitch( 1.5f );
+            blt->setVolume( .5f );
+            
         
             if( t == 0 ) {
                 
@@ -1198,7 +1400,7 @@ void CTOFNContext::HandleEntityContact( void * pEntityA, int entTypeA, void * pE
      
         if( explosionEnt->GetClassType() == "XPL" )
             if( entA->GetPos().GetY() > -10.0f && entA->GetShipType() != 9 )
-                entA->Damage( 2 );
+                entA->Damage( 1 );
         
     }
 
@@ -1302,6 +1504,15 @@ void CTOFNContext::RandomizeStar( CStar * s )
     }
 
 	s->m_Speed = Util::RandomNumber( 50, 200 );
+    
+    if( m_CurrentMission == 4 ) {
+     
+        if( m_bEnding )
+            s->m_Speed = Util::RandomNumber( 90, 135 );
+        else
+            s->m_Speed = Util::RandomNumber( STAR_SPEED_FINALE, STAR_SPEED_FINALE * 1.5f );
+        
+    }
 
     if( m_bStarFieldUpgradeSelect )
         s->m_Speed *= 2.0f;
@@ -1669,20 +1880,63 @@ void CTOFNContext::DrawFunkyBackground2() {
     
 }
 
-void CTOFNContext::DrawSpaceFog() {
+void CTOFNContext::DrawSpaceFog( GLuint explosionTex ) {
  
     if( m_pSpaceFogFBO ) {
      
+        static float fogR = .8f, fogG = .8f, fogB = .8f;
         static float stadd = 0.0f;
+        float stalpha = .35f;
         
         if( !m_bGameFrozen ) {
             
-            stadd += .25 * GetFrameDelta();
+            float speed = .25f;
+            
+            if( m_CurrentMission == 4 && !m_bEnding )
+                speed = FOG_STSPEED_FINALE;
+            
+            stadd += speed * GetFrameDelta();
+            
+        }
+        
+        if( m_CurrentMission == 4 && !m_bEnding ) {
+         
+            static float alphaWave = 0.0f;
+            static float rgbWave = 0.0f;
+            
+            rgbWave += 5.0f * m_FrameDelta;
+            alphaWave += 1.0f * m_FrameDelta;
+            
+            if( alphaWave > 360.0f )
+                alphaWave -= 360.0f;
+            
+            stalpha = .33f + .05f * cos( alphaWave );
+        
+    
+            fogR = fabs( cos( rgbWave ) );
+            fogG = 1.0f - fabs( cos( rgbWave ) );
+            fogB = fabs( sin( rgbWave ) );
+            
+            
+            
+        }
+        
+        if( stadd > 1.0f ) {
+         
+            stadd -= 1.0f;
             
         }
 
+        
         DrawContext()->UseShaderProgram( GraphicsContext()->GetShaderIDFromIndex( 9 ) );
-       
+        
+        glActiveTexture( GL_TEXTURE1 );
+        glBindTexture( GL_TEXTURE_2D, explosionTex );
+        int l = glGetUniformLocation( GraphicsContext()->GetShaderIDFromIndex( 9 ), "texUnit2" );
+        glUniform1i( l, 1 );
+        
+        glActiveTexture( GL_TEXTURE0 );
+     
         int f = glGetUniformLocation( GraphicsContext()->GetShaderIDFromIndex( 9 ), "STAdd" );
         glUniform1f( f, stadd );
         CMatrix< float > mat;
@@ -1690,7 +1944,7 @@ void CTOFNContext::DrawSpaceFog() {
         mat.Translate( 0.0f, SCREEN_HEIGHT, 0.0f );
         mat.Scale( SCREEN_WIDTH, -SCREEN_HEIGHT, 1.0f );
         
-        DrawContext()->SetDrawColor( 0.8f, 0.8f, 0.8f, 0.12f );
+        DrawContext()->SetDrawColor( fogR, fogB, fogB, stalpha );
         
         DrawContext()->Bind2DVertexArray();
         m_pSpaceFogFBO->DrawTextureDontForceSize( DrawContext(), &mat );
@@ -1743,6 +1997,8 @@ void CTOFNContext::GameLogic()
     if( !m_bGameFrozen ) {
     
      //   m_PhysicsWorld.Update();
+        
+        SoundContext()->Update();
         
         m_CollisionEngine.CheckForQuadTreeCollisions( &m_QuadTree, &m_CollisionCallback );
 

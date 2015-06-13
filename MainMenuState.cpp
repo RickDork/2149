@@ -34,6 +34,9 @@ void CMainMenuState::PostInit()
 }
 
 void CMainMenuState::OnStateSwitch() {
+    
+    m_pGameContext->PlayMusic( "menu.mp3", .1f );
+    m_pGameContext->FadeMusic( 2000, .1f, 1.0f );
 
     
 }

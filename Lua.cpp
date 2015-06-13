@@ -448,6 +448,83 @@ LuaCallBackFunction( GetAnimData ) {
     
 }
 
+LuaCallBackFunction( TriggerEnding ) {
+ 
+    gLuaContext->TriggerEnding();
+    
+    return 0;
+    
+}
+
+LuaCallBackFunction( ExplodePlayer ) {
+ 
+    gLuaContext->ExplodePlayer();
+    
+    return 0;
+    
+}
+
+LuaCallBackFunction( PlayMusic ) {
+    
+    std::string dir = LString( 1 );
+    float volume = 1.0f;
+    
+    if( LArgCount() > 1 )
+        volume = LNumber( 2 );
+    
+    gLuaContext->PlayMusic( dir, volume );
+    
+    return 0;
+    
+}
+
+LuaCallBackFunction( PlaySound ) {
+    
+    std::string dir = LString( 1 );
+    float vol = 1.0f;
+    
+    if( LArgCount() > 1 )
+        vol = LNumber( 2 );
+    
+    gLuaContext->PlaySound( dir, vol );
+    
+    return 0;
+    
+}
+
+
+LuaCallBackFunction( ClearAllEnemies ) {
+    
+    gLuaContext->ClearAllEnemies();
+    
+    return 0;
+    
+}
+
+
+LuaCallBackFunction( FadeOutMusic ) {
+ 
+    int fade = LNumber( 1 );
+    
+    gLuaContext->FadeMusic( fade * 48, 1.0f, 0.0f );
+    
+    return 0;
+    
+}
+
+LuaCallBackFunction( FadeVolume ) {
+ 
+    int fade = LNumber( 1 );
+    float volume = LNumber( 2 );
+    float volume2 = LNumber( 3 );
+    
+    gLuaContext->FadeMusic( fade * 48, volume, volume2 );
+    
+    
+    return 0;
+    
+}
+
 void CTOFNLua::CreateLuaHooks()
 {
     
@@ -476,6 +553,13 @@ void CTOFNLua::CreateLuaHooks()
         LuaNameSpaceFunction( m_pLuaState, "Game", GetPlayerKillCount );
         LuaNameSpaceFunction( m_pLuaState, "Game", ToggleScene );
         LuaNameSpaceFunction( m_pLuaState, "Game", CreateExplosions );
+        LuaNameSpaceFunction( m_pLuaState, "Game", TriggerEnding );
+        LuaNameSpaceFunction( m_pLuaState, "Game", ExplodePlayer );
+        LuaNameSpaceFunction( m_pLuaState, "Game", PlayMusic );
+        LuaNameSpaceFunction( m_pLuaState, "Game", PlaySound );
+        LuaNameSpaceFunction( m_pLuaState, "Game", ClearAllEnemies );
+        LuaNameSpaceFunction( m_pLuaState, "Game", FadeOutMusic );
+        LuaNameSpaceFunction( m_pLuaState, "Game", FadeVolume );
     
     LuaNameSpace( m_pLuaState, "Draw" );
         LuaNameSpaceFunction( m_pLuaState, "Draw", DrawString );

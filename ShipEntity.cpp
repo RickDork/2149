@@ -2,6 +2,8 @@
 
 void CShipEntity::Draw() {
 
+    if( !m_bDraw )
+        return;
     
     CMatrix< float > mat;
     mat.Identity();
@@ -10,7 +12,9 @@ void CShipEntity::Draw() {
     if( m_bHoverEffect ) {
         
         yoffset = cos( m_HoverTheta * DEG2RAD ) * 5.0f;
-        m_HoverTheta += m_pContext->GetFrameDelta() * 100.0f;
+        
+        if( !m_pContext->GetBoolean( "GameFrozen" ) )
+            m_HoverTheta += m_pContext->GetFrameDelta() * 100.0f;
         
         if( m_HoverTheta > 360.0f )
             m_HoverTheta -= 360.0f;

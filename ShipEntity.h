@@ -27,10 +27,11 @@ protected:
     float m_HoverTheta;
     
     bool m_bWrapEdges;
+    bool m_bDraw;
     
 public:
 
-    CShipEntity() : CAIEntity(), m_Health( 100.0f ), m_MaxHealth( 100.0f ), m_Armor( 100.0f ), m_bCountAsEnemy( false ), m_NextShotTime( 0 ), m_LastHurtTime( -1 ), m_ShipType( -1 ), m_pTrailsImage( NULL ), m_TrailNextColorChange( 0 ), m_bHoverEffect( false ), m_HoverTheta( 0.0f ), m_bWrapEdges( false )
+    CShipEntity() : CAIEntity(), m_Health( 100.0f ), m_MaxHealth( 100.0f ), m_Armor( 100.0f ), m_bCountAsEnemy( false ), m_NextShotTime( 0 ), m_LastHurtTime( -1 ), m_ShipType( -1 ), m_pTrailsImage( NULL ), m_TrailNextColorChange( 0 ), m_bHoverEffect( false ), m_HoverTheta( 0.0f ), m_bWrapEdges( false ), m_bDraw( true )
     {
 
     }
@@ -40,6 +41,12 @@ public:
     bool GetWrapEdges() {
      
         return m_bWrapEdges;
+        
+    }
+    
+    void SetDraw( bool b ) {
+     
+        m_bDraw = b;
         
     }
     

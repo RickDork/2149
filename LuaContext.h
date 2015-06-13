@@ -42,6 +42,13 @@ public:
     virtual void CreateExplosionsAndSmoke( int, int, float, float ) = 0;
     virtual void DrawFunkyBackground1() = 0;
     virtual void DrawFunkyBackground2() = 0;
+    virtual void TriggerEnding() = 0;
+    virtual void ExplodePlayer() = 0;
+    virtual void PlayMusic( std::string ) = 0;
+    virtual void PlayMusic( std::string, float ) = 0;
+    virtual void PlaySound( std::string, float ) = 0;
+    virtual void ClearAllEnemies() = 0;
+    virtual void FadeMusic( int, float, float ) = 0;
     
 	CLuaContext() : CGameContext() { }
 	virtual ~CLuaContext() { }

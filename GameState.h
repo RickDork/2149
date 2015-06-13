@@ -6,6 +6,7 @@
 #include "GameContext.h"
 #include "ShipEntity.h"
 #include "Entity.h"
+#include "TrippyTrails.h"
 #include "Define.h"
 
 #define SECONDS_FLASH_TIME 300
@@ -24,10 +25,18 @@ private:
     CTrailsEffect m_BulletTrails;
     //CFrameBufferObject m_fboCurBullets, m_fboTrailBullets, m_fboTrailBulletsTemp;
     
+    CTrippyTrails m_TrippyTrails[5];
+    int m_CurTrippyTrailFrame;
+    long int m_NextTrippyTrailFrameTime;
+    
     CFrameBufferObject m_fboNoiseImage;
     CFrameBufferObject m_fboNoiseBG;
     CFrameBufferObject m_fbo3DSpace;
     CFrameBufferObject m_fboGameBuffer;
+    CFrameBufferObject m_fboShips, m_fboShipsHorizPassThru;
+    CFrameBufferObject m_fboSpaceFog;
+    CFrameBufferObject m_fboExplosions;
+    
     GLuint t;
     bool m_DrawSeconds;
     long int m_NextSecondsFlash;

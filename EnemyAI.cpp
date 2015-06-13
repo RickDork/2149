@@ -97,6 +97,7 @@ void CEnemyAI::Think()
             
             if( !m_bBossModeEnable ) {
                 
+                p->PlayMusic( "rtj4.mp3" );
                 m_bBossModeEnable = true;
                 p->ToggleBossMode( true );
             

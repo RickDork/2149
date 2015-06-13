@@ -21,6 +21,9 @@
 
 #define MAX_STARS 3000
 
+#define STAR_SPEED_FINALE 200.0f
+#define FOG_STSPEED_FINALE .7f
+
 class CEnemyGenQueue {
   
 public:
@@ -60,8 +63,11 @@ private:
     float m_BossHealth;
     bool m_bCutScene;
     bool m_bPlayerInvincible;
+    bool m_bEnding;
     
     CQuadTree m_QuadTree;
+    FMOD::Channel * m_pCurMusChannel;
+    long int m_NextBulletSound;
 
     boost::ptr_vector< CStar > m_pStars;
     boost::ptr_vector< CParticleExplosion > m_pExplosions;
@@ -128,6 +134,22 @@ public:
         m_StarFieldSpeedMul = m;
         
     }
+    
+    void StopMusic();
+    void FadeMusic( int, float, float );
+    void PlayMusic( std::string );
+    void PlayMusic( std::string, float );
+    void PlaySound( std::string, float );
+    
+    void ExplodePlayer();
+    
+    bool EndingTriggered() {
+     
+        return m_bEnding;
+        
+    }
+    
+    void TriggerEnding();
     
     void SetSpaceFogFBO( CFrameBufferObject * pSpaceFogFBO ) {
      
@@ -382,7 +404,8 @@ public:
     void UpdateAllEntities();
     void UpdateTextPopups();
     void UpdateExplosions();
-
+    void ClearAllEnemies();
+    
     void CreateStarBackground();
     void DrawStarBackground();
     void DrawExplosions();
@@ -428,7 +451,7 @@ public:
     void DrawFunkyBackground1();
     void DrawFunkyBackground2();
     void DrawFunkyBackground( int, float &, float &, float & );
-    void DrawSpaceFog();
+    void DrawSpaceFog( GLuint );
     
     void GameLogic();
 
