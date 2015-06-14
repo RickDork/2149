@@ -47,7 +47,7 @@ void CShipEntity::Draw() {
                     } else {
                         
                         m_TrailNextColorChange = SDL_GetTicks() + Util::RandomNumber( 20, 50 );
-                        m_TrailColor.SetW( ( float )Util::RandomNumber( 80, 120 ) / 255.0f );
+                        m_TrailColor.SetW( ( float )Util::RandomNumber( 160, 210 ) / 255.0f );
                     
                     }
                     

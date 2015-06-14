@@ -6,7 +6,7 @@
 #endif
 
 CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 3 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f ),
-    m_bCutScene( false ), m_BossHealth( 0.0f ), m_bPlayerInvincible( false ), m_pSpaceFogFBO( NULL ), m_bEnding( false ), m_NextBulletSound( 0 )
+    m_bCutScene( false ), m_BossHealth( 0.0f ), m_bPlayerInvincible( false ), m_pSpaceFogFBO( NULL ), m_bEnding( false ), m_NextBulletSound( 0 ), m_pCurMusChannel( NULL )
 {
     
     m_QuadTree.Init( 0, -100, 1200 );
@@ -16,7 +16,7 @@ CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnem
 void CTOFNContext::InitializePhysicsWorld()
 {
 
-    m_PhysicsWorld.Initialize( 0.0f, 0.0f );
+    //m_PhysicsWorld.Initialize( 0.0f, 0.0f );
     m_CollisionCallback.SetContext( this );
    // m_PhysicsWorld.SetContactListener( &m_CollisionCallback );
 

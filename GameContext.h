@@ -86,7 +86,7 @@ private:
     //GLuint m_InstancedBuffer, m_InstancedRGBABuffer;
 
     CTOFNLua m_Lua;
-    CPhysicsWorld m_PhysicsWorld;
+    //CPhysicsWorld m_PhysicsWorld;
     CTextureImage img;
     CCollisionCallback m_CollisionCallback;
     CFrameBufferObject * m_pFunkyBGFBO, * m_pSpaceFogFBO;

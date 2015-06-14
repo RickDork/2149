@@ -364,13 +364,13 @@ void CGameState::Draw()
             m_pGameContext->DrawExplosions();
         m_fboExplosions.EndDrawingToFBO();
     
-        glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
+        //glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
         m_fboShips.BeginDrawingToFBO();
             glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
             glClear( GL_COLOR_BUFFER_BIT ); 
             m_pGameContext->EntityManager()->DrawAllEntitiesAtDepth( 1 );
         m_fboShips.EndDrawingToFBO();
-        glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+        //glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
     
         m_fboSpaceFog.BeginDrawingToFBO();
             glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
