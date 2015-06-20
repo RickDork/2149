@@ -16,6 +16,8 @@ private:
     CTextureImage * m_PixelMat, * m_KeyMat, * m_LongKeyMat;
     CTextureImage * m_Title1, * m_Title2, * m_MenuBack, * m_MenuBack2;
     CFontMaterial * m_pFont;
+
+	bool m_bCanLoadSave;
     
     bool m_bIntroOn;
     

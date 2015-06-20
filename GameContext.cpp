@@ -5,7 +5,7 @@
 #include "CoreFoundation/CoreFoundation.h"
 #endif
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 3 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f ),
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 1 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f ),
     m_bCutScene( false ), m_BossHealth( 0.0f ), m_bPlayerInvincible( false ), m_pSpaceFogFBO( NULL ), m_bEnding( false ), m_NextBulletSound( 0 ), m_pCurMusChannel( NULL )
 {
     
@@ -204,11 +204,11 @@ void CTOFNContext::GameplayStart() {
     m_bBossMode = false;
     m_bGameFrozen = false;
     
-   // if( m_CurrentMission == 4 )
+    if( m_CurrentMission == 4 )
         m_bPlayerInvincible = true;
   
-    this->GiveUpgrade( 7, 0 );
-    this->GiveUpgrade( 8, 0 );
+    //this->GiveUpgrade( 7, 0 );
+    //this->GiveUpgrade( 8, 0 );
     
     m_PlayerKillCount = 0;
     
@@ -235,6 +235,8 @@ void CTOFNContext::NextMission() {
     
     m_bMissionOver = true;
     
+	SaveGame();
+
     //GameplayStart();
     
 }
@@ -1182,6 +1184,55 @@ void CTOFNContext::DestroyShip( CShipEntity * e, bool quiet )
     
     if( e->CountAsEnemy() )
         m_CurEnemyCount--;
+
+}
+
+void CTOFNContext::LoadSavedGame() {
+
+	if( DoesSavedGameExist() ) {
+	
+		std::ifstream f( "save.sav" );
+		f >> m_CurrentMission >> m_StartingEXP;
+
+		m_PlayerEXP = m_StartingEXP;
+
+		while( !f.eof() ) {
+	
+			int up = -1;
+			f >> up;
+			GiveUpgrade( up, 0 );
+		
+		}
+
+		f.close();
+	
+	}
+
+}
+
+void CTOFNContext::SaveGame() {
+
+	std::ofstream f( "save.sav" );
+	f << m_CurrentMission << std::endl;
+	f << m_StartingEXP << std::endl;
+	
+	for( int j = 0; j < 11; j++ ) {
+	
+		if( HasUpgrade( j ) ) {
+		
+			f << j << std::endl;
+		
+		}
+
+	}
+
+	f.close();
+	
+}
+
+bool CTOFNContext::DoesSavedGameExist() {
+
+	return Util::DoesFileExist( "save.sav" );
 
 }
 

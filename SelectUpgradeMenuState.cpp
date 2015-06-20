@@ -72,10 +72,10 @@ void CSelectUpgradeMenuState::OnStateSwitch() {
     if( m_bSelectOne ) {
      
         m_pGameContext->PlayMusic( "win.mp3", .1f );
-        m_pGameContext->FadeMusic( 3000, .1f, 1.0f );
+        m_pGameContext->FadeMusic( 3000, .1f, .7f );
         
     } else
-        m_pGameContext->PlayMusic( "win.mp3", 1.0f );
+        m_pGameContext->PlayMusic( "win.mp3", .7f );
     
 }
 

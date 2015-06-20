@@ -175,6 +175,10 @@ public:
         return m_bCutScene;
         
     }
+
+	void LoadSavedGame();
+	void SaveGame();
+	bool DoesSavedGameExist();
     
     void ToggleGameFrozen( bool b ) {
      

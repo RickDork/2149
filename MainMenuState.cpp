@@ -38,6 +38,8 @@ void CMainMenuState::OnStateSwitch() {
     m_pGameContext->PlayMusic( "menu.mp3", .1f );
     m_pGameContext->FadeMusic( 2000, .1f, 1.0f );
 
+	m_bCanLoadSave = m_pGameContext->DoesSavedGameExist();
+
     
 }
 
@@ -53,6 +55,17 @@ void CMainMenuState::Input()
 
 			m_bIntroOn = true;
 			m_pGameContext->Lua().CallEngineFunction( "StartIntro" );
+
+		}
+
+		if( m_GameInput.KeyDownOnce( SDLK_SPACE ) ) {
+		
+			if( m_bCanLoadSave ) {
+			
+				m_pGameContext->LoadSavedGame();
+				SwitchToAnotherState( "GAME" );
+
+			}
 
 		}
 
@@ -134,9 +147,14 @@ void CMainMenuState::Draw() {
     
         m_pFont->DrawString( m_pGameContext->DrawContext(), "ENTER       Start Game", SCREEN_WIDTH * .5f - 74.0f, SCREEN_HEIGHT * .5f + 39.0f, 1.0f, 1.0f, 1.0f, alpha );
  
-         m_pGameContext->DrawContext()->DrawMaterial( *m_LongKeyMat, SCREEN_WIDTH * .5 - 95.0f, SCREEN_HEIGHT * .5f + 90.0f, 135.0f, 50.0f, 1.0f, 1.0f, 1.0f, alpha );
+		float loadalpha = ( m_bCanLoadSave )? 1.0f : .1f;
+
+		if( alpha < loadalpha )
+			loadalpha = alpha;
+
+         m_pGameContext->DrawContext()->DrawMaterial( *m_LongKeyMat, SCREEN_WIDTH * .5 - 95.0f, SCREEN_HEIGHT * .5f + 90.0f, 135.0f, 50.0f, 1.0f, 1.0f, 1.0f, loadalpha );
         
-        m_pFont->DrawString( m_pGameContext->DrawContext(), "SPACE       Load Last Save", SCREEN_WIDTH * .5f - 74.0f, SCREEN_HEIGHT * .5f + 100.0f, 1.0f, 1.0f, 1.0f, alpha );
+        m_pFont->DrawString( m_pGameContext->DrawContext(), "SPACE       Load Last Save", SCREEN_WIDTH * .5f - 74.0f, SCREEN_HEIGHT * .5f + 100.0f, 1.0f, 1.0f, 1.0f, loadalpha );
        
          m_pGameContext->DrawContext()->DrawMaterial( *m_LongKeyMat, SCREEN_WIDTH * .5 - 55.0f, SCREEN_HEIGHT * .5f + 150.0f, 40.0f, 50.0f, 1.0f, 1.0f, 1.0f, alpha );
         
