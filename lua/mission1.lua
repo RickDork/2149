@@ -37,16 +37,42 @@ function LEVEL.Init()
     
 end
 
-LEVEL.OrbMessage = false;
 
 function LEVEL.Think()
+  
+    if( not Game.IntroControlMessage ) then
+
+		if( not CutSceneOn ) then
+	
+			Game.IntroControlMessage = true;
+		
+			addTimer( 11000, function()
+			
+				Game.ToggleGameFrozen( true );
+				
+				addDialogueText( DIALOG_PROFILE_KALMIYA, "Use WASD to move your ship around.  Press ESCAPE to pause or skip cutscenes.", 4000 );
+
+				addDialogueText( DIALOG_PROFILE_KALMIYA, "Your guns will automatically fire when enemies are detected.", 2000, 6000 );
+
+				addTimer( 11000, function()
+
+									Game.ToggleGameFrozen( false );            
+
+								end );
+					
+			end );
+
+		end
+
+    end
+    
    
-    if( not Game.IntroOrbMessage ) then
+    if( not Game.IntroOrbMessage and Game.IntroControlMessage ) then
 
         if( Game.GetPlayerKillCount() > 0 ) then
         
             Game.IntroOrbMessage = true;
-            
+			
             addTimer( 900, function()
             
                 Game.ToggleGameFrozen( true );
@@ -64,6 +90,33 @@ function LEVEL.Think()
             end );
             
         end
+		
+	end
+		
+    if( not Game.IntroTipMessage ) then
+		
+		if( not CutSceneOn ) then
+			
+			Game.IntroTipMessage = true;
+			
+			hookEvent( 60000, function() 
+		
+				Game.ToggleGameFrozen( true );
+				
+				addDialogueText( DIALOG_PROFILE_KALMIYA, "Instead of primarily focusing on dodging and avoiding enemies.. ", 2000 );
+				addDialogueText( DIALOG_PROFILE_KALMIYA, "You may find it advantageous to be more proactive and on the offensive.", 2000, 4000 );
+				addDialogueText( DIALOG_PROFILE_KALMIYA, "Higher kills warrant larger yields of health and experience.", 2000, 8000 );
+
+				addTimer( 12000, function()
+
+									Game.ToggleGameFrozen( false );            
+
+								end );
+					
+			end );
+		
+		end
+
 
     end
     
