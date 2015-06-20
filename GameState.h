@@ -18,9 +18,11 @@ class CGameState : public CState< CTOFNContext >
 private:
     
     CTextureImage * m_PixelMat;
-
-    CGameInput m_GameInput;
+	CTextureImage * m_LongKeyMat;
+    
+	CGameInput m_GameInput;
     CShipEntity * m_pPlayerEntity;
+   
     CFontMaterial * m_pHUDFont;
     CTrailsEffect m_BulletTrails;
     //CFrameBufferObject m_fboCurBullets, m_fboTrailBullets, m_fboTrailBulletsTemp;
@@ -36,6 +38,8 @@ private:
     CFrameBufferObject m_fboShips, m_fboShipsHorizPassThru;
     CFrameBufferObject m_fboSpaceFog;
     CFrameBufferObject m_fboExplosions;
+
+	bool m_bGamePaused;
     
     GLuint t;
     bool m_DrawSeconds;

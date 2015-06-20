@@ -51,6 +51,7 @@ void CGameState::PostInit()
     m_pHUDFont = m_pGameContext->FontFactory()->GetFont( DEFAULT_FONT, 32 );
     
     m_PixelMat = GetTexture( "pixel.png" );
+	m_LongKeyMat = GetTexture( "longkey_bright.png" );
     
     m_NextSecondsFlash = SDL_GetTicks() + SECONDS_FLASH_TIME;
     m_DrawSeconds = true;
@@ -73,6 +74,9 @@ void CGameState::OnStateSwitch() {
     m_pPlayerEntity = m_pGameContext->GetPlayerEntity();
     
     m_BulletTrails.Clear();
+
+	m_bGamePaused = false;
+
     
     
 }
@@ -84,7 +88,7 @@ void CGameState::Input()
 
     static const float plyMoveSpeedX = 500.0f;
     static const float plyMoveSpeedY = 500.0f;
-    
+    /*
     if( m_pGameContext->IsCutsceneOn() ) {
     
         if( m_GameInput.KeyDown( SDL_SCANCODE_RETURN ) ) {
@@ -104,7 +108,8 @@ void CGameState::Input()
 
     } else if( m_EndCutSceneTriggerTime > 0 )
         m_EndCutSceneTriggerTime = 0;
-    
+    */
+
     if( !m_pGameContext->IsGameFrozen() ) {
     
     if( m_pPlayerEntity && m_pGameContext->PlayerInputEnabled() ) {
@@ -176,11 +181,66 @@ void CGameState::Input()
     }
 */
 
-    if( m_GameInput.KeyDown( SDL_SCANCODE_ESCAPE ) )
-    {
+	m_GameInput.Poll();
 
-		   m_bContinue = false;
+	if( m_GameInput.EventType() == SDL_KEYDOWN ) {
+	
+
+		if( m_GameInput.KeyDownOnce( SDLK_ESCAPE ) )
+		{
+		
+			//If cutscene on, always allow player to press escape to skip, no exceptions.	
+			if( m_pGameContext->IsCutsceneOn() ) {
+
+				m_pGameContext->Lua().CallEngineFunction( "SkipCutscene" );
+
+			//If game is already paused, always allow unpause.
+			} else if( m_bGamePaused ) {
+			
+				
+				m_bGamePaused = false;
+				m_pGameContext->ToggleGameFrozen( false );
+				m_pGameContext->PauseMusic( false );
+
+			//If game is unpaused and there is no cutscene, we have to do further validation..
+			} else if( !m_pGameContext->IsCutsceneOn() ) {
+
+				//Only allow pause if player can enter input
+				if( m_pGameContext->PlayerInputEnabled() ) {
+
+					//Only allow pause if game is not already frozen (if it were, it would be for lua-induced reasons)
+					if( !m_pGameContext->IsGameFrozen() ) {
+				
+						m_bGamePaused = true;
+						m_pGameContext->ToggleGameFrozen( true );
+						m_pGameContext->PauseMusic( true );
+
+					}
+
+				}
+
+			}
+
+		}
+
+		if( m_bGamePaused ) {
+	
+			if( m_GameInput.KeyDownOnce( SDLK_RETURN ) ) {
+		
+				m_bContinue = false;
+
+			}
+
+		}
+
 	}
+
+	if( m_GameInput.EventType() == SDL_QUIT ) {
+	
+		m_bContinue = false;
+
+	}
+
 
 }
 
@@ -661,6 +721,21 @@ void CGameState::Draw()
         m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, 11.0f, 561.0f, 148.0f * health_mul, 8.0f, 0.2f, 0.8f, 0.2f, 0.5f );
 
 */
+
+	if( m_bGamePaused ) {
+	
+		m_pGameContext->DrawContext()->DrawMaterial( *m_PixelMat, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, .5f );
+
+        m_pGameContext->DrawContext()->DrawMaterial( *m_LongKeyMat, SCREEN_WIDTH * .5 - 130.0f, SCREEN_HEIGHT * .5f + 20.0f, 175.0f, 65.0f, 1.0f, 1.0f, 1.0f, 1.0f );
+        m_pHUDFont->DrawString( m_pGameContext->DrawContext(), "ESCAPE      Unpause", SCREEN_WIDTH * .5f - 114.0f, SCREEN_HEIGHT * .5f + 29.0f, 1.0f, 1.0f, 1.0f, 1.0f );
+ 
+		        
+        m_pGameContext->DrawContext()->DrawMaterial( *m_LongKeyMat, SCREEN_WIDTH * .5 - 130.0f, SCREEN_HEIGHT * .5f + 100.0f, 150.0f, 65.0f, 1.0f, 1.0f, 1.0f, 1.0f );
+        m_pHUDFont->DrawString( m_pGameContext->DrawContext(), "ENTER       Quit Game", SCREEN_WIDTH * .5f - 114.0f, SCREEN_HEIGHT * .5f + 109.0f, 1.0f, 1.0f, 1.0f, 1.0f );
+ 
+
+	}
+
    m_pGameContext->GraphicsContext()->SwapBuffers();
 
 

@@ -1,0 +1,10 @@
+*.vcxproj
+2149.vcxproj.filters
+*.log
+Release/2149.tlog/2149.lastbuildstate
+*.tlog
+Release/vc120.pdb
+*.user
+*.obj
+log.txt
+*.txt

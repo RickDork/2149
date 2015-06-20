@@ -135,6 +135,7 @@ public:
         
     }
     
+	void PauseMusic( bool );
     void StopMusic();
     void FadeMusic( int, float, float );
     void PlayMusic( std::string );

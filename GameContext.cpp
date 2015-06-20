@@ -1199,6 +1199,13 @@ void CTOFNContext::FadeMusic( int fade, float volume, float volume2 ) {
     
 }
 
+void CTOFNContext::PauseMusic( bool b ) {
+
+	if( m_pCurMusChannel ) 
+		m_pCurMusChannel->setPaused( b );
+
+}
+
 void CTOFNContext::StopMusic() { 
  
     if( m_pCurMusChannel )
