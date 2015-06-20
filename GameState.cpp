@@ -181,14 +181,11 @@ void CGameState::Input()
     }
 */
 
-	m_GameInput.Poll();
-
 	if( m_GameInput.EventType() == SDL_KEYDOWN ) {
-	
 
 		if( m_GameInput.KeyDownOnce( SDLK_ESCAPE ) )
 		{
-		
+
 			//If cutscene on, always allow player to press escape to skip, no exceptions.	
 			if( m_pGameContext->IsCutsceneOn() ) {
 
@@ -224,7 +221,13 @@ void CGameState::Input()
 		}
 
 		if( m_bGamePaused ) {
-	
+		
+			if( m_GameInput.KeyDownOnce( SDLK_f ) ) {
+
+				m_pGameContext->GraphicsContext()->SetFullScreen( !m_pGameContext->GraphicsContext()->IsFullScreen() );
+
+			}
+
 			if( m_GameInput.KeyDownOnce( SDLK_RETURN ) ) {
 		
 				m_bContinue = false;
@@ -730,9 +733,12 @@ void CGameState::Draw()
         m_pHUDFont->DrawString( m_pGameContext->DrawContext(), "ESCAPE      Unpause", SCREEN_WIDTH * .5f - 114.0f, SCREEN_HEIGHT * .5f + 29.0f, 1.0f, 1.0f, 1.0f, 1.0f );
  
 		        
-        m_pGameContext->DrawContext()->DrawMaterial( *m_LongKeyMat, SCREEN_WIDTH * .5 - 130.0f, SCREEN_HEIGHT * .5f + 100.0f, 150.0f, 65.0f, 1.0f, 1.0f, 1.0f, 1.0f );
-        m_pHUDFont->DrawString( m_pGameContext->DrawContext(), "ENTER       Quit Game", SCREEN_WIDTH * .5f - 114.0f, SCREEN_HEIGHT * .5f + 109.0f, 1.0f, 1.0f, 1.0f, 1.0f );
+        m_pGameContext->DrawContext()->DrawMaterial( *m_LongKeyMat, SCREEN_WIDTH * .5 - 130.0f, SCREEN_HEIGHT * .5f + 100.0f, 50.0f, 65.0f, 1.0f, 1.0f, 1.0f, 1.0f );
+        m_pHUDFont->DrawString( m_pGameContext->DrawContext(), "F       Toggle fullscreen", SCREEN_WIDTH * .5f - 114.0f, SCREEN_HEIGHT * .5f + 109.0f, 1.0f, 1.0f, 1.0f, 1.0f );
  
+         m_pGameContext->DrawContext()->DrawMaterial( *m_LongKeyMat, SCREEN_WIDTH * .5 - 130.0f, SCREEN_HEIGHT * .5f + 180.0f, 150.0f, 65.0f, 1.0f, 1.0f, 1.0f, 1.0f );
+        m_pHUDFont->DrawString( m_pGameContext->DrawContext(), "ENTER       Exit game", SCREEN_WIDTH * .5f - 114.0f, SCREEN_HEIGHT * .5f + 189.0f, 1.0f, 1.0f, 1.0f, 1.0f );
+
 
 	}
 

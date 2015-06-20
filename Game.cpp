@@ -65,7 +65,7 @@ CGame::CGame()
     m_StateMachine.AddState( "UPGRADESELECT", ( CSelectUpgradeMenuState * )pSelectUpgradeMenuState );
     m_StateMachine.AddState( "MAINMENU", ( CMainMenuState * )pMainMenuState);
     
-    m_StateMachine.SetActiveState( "GAME" );
+    m_StateMachine.SetActiveState( "MAINMENU" );
     
     Log::Debug( "State Machine initialized\nStarting main loop" );
 

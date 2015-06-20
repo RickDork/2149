@@ -46,16 +46,29 @@ void CMainMenuState::Input()
     
     m_GameInput.Poll();
     
-    if( StateTicksElapsed() > 4000 && !m_bIntroOn && m_GameInput.KeyDown( SDL_SCANCODE_RETURN ) )
+    if( StateTicksElapsed() > 4000 && !m_bIntroOn )
     {
         
-        m_bIntroOn = true;
-        m_pGameContext->Lua().CallEngineFunction( "StartIntro" );
+		if(  m_GameInput.KeyDown( SDL_SCANCODE_RETURN ) ) { 
 
+			m_bIntroOn = true;
+			m_pGameContext->Lua().CallEngineFunction( "StartIntro" );
+
+		}
+
+		if( m_GameInput.EventType() == SDL_KEYDOWN ) {
+
+			if( m_GameInput.KeyDownOnce( SDLK_f ) ) {
+
+				m_pGameContext->GraphicsContext()->SetFullScreen( !m_pGameContext->GraphicsContext()->IsFullScreen() );
+
+			}
+
+		}
         
     }
-    
-    if( m_GameInput.KeyDown( SDL_SCANCODE_ESCAPE ) )
+
+    if( m_GameInput.EventType() == SDL_QUIT || m_GameInput.KeyDown( SDL_SCANCODE_ESCAPE ) )
     {
         
         QuitState();
@@ -121,9 +134,17 @@ void CMainMenuState::Draw() {
     
         m_pFont->DrawString( m_pGameContext->DrawContext(), "ENTER       Start Game", SCREEN_WIDTH * .5f - 74.0f, SCREEN_HEIGHT * .5f + 39.0f, 1.0f, 1.0f, 1.0f, alpha );
  
-        m_pGameContext->DrawContext()->DrawMaterial( *m_LongKeyMat, SCREEN_WIDTH * .5 - 100.0f, SCREEN_HEIGHT * .5f + 90.0f, 140.0f, 50.0f, 1.0f, 1.0f, 1.0f, alpha );
+         m_pGameContext->DrawContext()->DrawMaterial( *m_LongKeyMat, SCREEN_WIDTH * .5 - 95.0f, SCREEN_HEIGHT * .5f + 90.0f, 135.0f, 50.0f, 1.0f, 1.0f, 1.0f, alpha );
         
-        m_pFont->DrawString( m_pGameContext->DrawContext(), "ESCAPE      Quit", SCREEN_WIDTH * .5f - 82.0f, SCREEN_HEIGHT * .5f + 100.0f, 1.0f, 1.0f, 1.0f, alpha );
+        m_pFont->DrawString( m_pGameContext->DrawContext(), "SPACE       Load Last Save", SCREEN_WIDTH * .5f - 74.0f, SCREEN_HEIGHT * .5f + 100.0f, 1.0f, 1.0f, 1.0f, alpha );
+       
+         m_pGameContext->DrawContext()->DrawMaterial( *m_LongKeyMat, SCREEN_WIDTH * .5 - 55.0f, SCREEN_HEIGHT * .5f + 150.0f, 40.0f, 50.0f, 1.0f, 1.0f, 1.0f, alpha );
+        
+        m_pFont->DrawString( m_pGameContext->DrawContext(), "F             Toggle fullscreen", SCREEN_WIDTH * .5f - 40.0f, SCREEN_HEIGHT * .5f + 160.0f, 1.0f, 1.0f, 1.0f, alpha );
+       
+        m_pGameContext->DrawContext()->DrawMaterial( *m_LongKeyMat, SCREEN_WIDTH * .5 - 100.0f, SCREEN_HEIGHT * .5f + 210.0f, 140.0f, 50.0f, 1.0f, 1.0f, 1.0f, alpha );
+        
+        m_pFont->DrawString( m_pGameContext->DrawContext(), "ESCAPE      Quit", SCREEN_WIDTH * .5f - 82.0f, SCREEN_HEIGHT * .5f + 220.0f, 1.0f, 1.0f, 1.0f, alpha );
         
     
         if( drawT2)
