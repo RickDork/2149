@@ -18,6 +18,7 @@
 #include "OrbAI.h"
 #include "SmokePlume.h"
 #include "TextPopup.h"
+#include "SpatialTree.h"
 
 #define MAX_STARS 3000
 
@@ -64,8 +65,9 @@ private:
     bool m_bCutScene;
     bool m_bPlayerInvincible;
     bool m_bEnding;
+    bool m_bEndGame;
     
-    CQuadTree m_QuadTree;
+    CSpatialQuadTree m_QuadTree;
     FMOD::Channel * m_pCurMusChannel;
     long int m_NextBulletSound;
 
@@ -132,6 +134,18 @@ public:
     void SetStarBackgroundSpeedMul( float m ) {
      
         m_StarFieldSpeedMul = m;
+        
+    }
+    
+    void EndGame() { 
+     
+        m_bEndGame = true;
+        
+    }
+    
+    bool IsGameEnded() { 
+     
+        return m_bEndGame;
         
     }
     

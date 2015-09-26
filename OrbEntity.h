@@ -25,7 +25,9 @@ public:
         
     }
     
-    virtual ~COrbEntity() { }
+    virtual ~COrbEntity() { 
+    
+    }
     
 };
 

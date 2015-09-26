@@ -6,10 +6,10 @@
 #endif
 
 CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 1 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f ),
-    m_bCutScene( false ), m_BossHealth( 0.0f ), m_bPlayerInvincible( false ), m_pSpaceFogFBO( NULL ), m_bEnding( false ), m_NextBulletSound( 0 ), m_pCurMusChannel( NULL )
+    m_bCutScene( false ), m_BossHealth( 0.0f ), m_bPlayerInvincible( false ), m_pSpaceFogFBO( NULL ), m_bEnding( false ), m_bEndGame( false ), m_NextBulletSound( 0 ), m_pCurMusChannel( NULL )
 {
     
-    m_QuadTree.Init( 0, -100, 1200 );
+    m_QuadTree.CreateTree( 0, 0, -100, 1200 );
 
 }
 
@@ -1034,7 +1034,7 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float
     m_QuadTree.AddEntity( ent );
     
     m_pEntityManager->AddEntity( ent );
-    m_pEntityManager->TrackEntity( "EN", ent );
+    //m_pEntityManager->TrackEntity( "EN", ent );
 
     return ent;
 
@@ -1130,6 +1130,7 @@ COrbEntity * CTOFNContext::CreateOrb( int type, float x, float y ) {
     aic->SetEntityContext( this );
     CTextureImage * m = m_pTextureFactory->GetObjectContent( orbspr );
     ent->SetClassTypeID( ENTTYPE_ORB );
+    ent->SetClassType( "ORB" );
     ent->SetDrawDepth( 2 );
     //ent->CreatePhysicsBody( m_PhysicsWorld.GetPhysicsWorld(), 20.0f, 20.0f );
     ent->SetMaterial( m);
@@ -1602,92 +1603,101 @@ void CTOFNContext::UpdateAllEntities()
 
         if( ( *i ).GetContent()->IsActive() )
         {
-
-            ( *i ).GetContent()->Update();
-
-            int type = ( *i ).GetContent()->GetClassTypeID();
-
-            if( type & ( ENTTYPE_PLAYER | ENTTYPE_ENEMY ) )
-            {
-
-                CShipEntity * pShip = static_cast< CShipEntity * >( ( *i ).GetContent() );
+            
+            if( ( *i ).GetContent()->KillMe() && ( *i ).GetContent()->GetClassTypeID() == ENTTYPE_ORB ) {
                 
-                if( type & ENTTYPE_PLAYER ) {
-                 
-                    if( pShip->GetLastHurtTime() > 0 ) {
+                m_pEntityManager->DeleteEntity(  ( *i ).GetContent() );
+                
+            } else {
+
+                ( *i ).GetContent()->Update();
+
+                int type = ( *i ).GetContent()->GetClassTypeID();
+
+                if( type & ( ENTTYPE_PLAYER | ENTTYPE_ENEMY ) )
+                {
+
+                    CShipEntity * pShip = static_cast< CShipEntity * >( ( *i ).GetContent() );
+                    
+                    if( type & ENTTYPE_PLAYER ) {
+                     
+                        if( pShip->GetLastHurtTime() > 0 ) {
+                            
+                            if( pShip->GetLastHurtTime() + 150 > SDL_GetTicks() ) {
+                             
+                                pShip->SetColor( 1.0f, 0.0f, 0.0f, 1.0f );
+                                
+                            } else {
+                                
+                                pShip->SetColor( 1.0f, 1.0f, 1.0f, 1.0f );
+                                pShip->SetLastHurtTime( -1 );
+                                
+                            }
+                            
+                        }
                         
-                        if( pShip->GetLastHurtTime() + 150 > SDL_GetTicks() ) {
-                         
-                            pShip->SetColor( 1.0f, 0.0f, 0.0f, 1.0f );
+                    }
+
+                    if( pShip->GetHealth() <= 0 )
+                    {
+                        
+                        if( pShip->GetShipType() != 9 ) {
+                            
+                            bool destroy = true;
+                            
+                            if( type & ENTTYPE_ENEMY ) {
+                            
+                                int t = ( pShip->GetShipType() == 6 )? 0 : Util::RandomNumber( 0, 1 );
+                                int count = ( pShip->GetShipType() == 6 )? 45 : Util::RandomNumber( 3, 6 );
+                                
+                                CreateOrbs( t, count, pShip->GetX(), pShip->GetY() );
+                            
+                            }
+                            
+                            if( type & ENTTYPE_PLAYER && m_bPlayerInvincible ) {
+                             
+                                destroy = false;
+                                
+                            }
+                            
+                            if( destroy ) {
+            
+                                DestroyShip( pShip, false );
+                                
+                                if( type & ENTTYPE_PLAYER )
+                                    m_pPlayerEntity = NULL;
+                                
+                            }
                             
                         } else {
-                            
-                            pShip->SetColor( 1.0f, 1.0f, 1.0f, 1.0f );
-                            pShip->SetLastHurtTime( -1 );
-                            
-                        }
-                        
-                    }
-                    
-                }
-
-                if( pShip->GetHealth() <= 0 )
-                {
-                    
-                    if( pShip->GetShipType() != 9 ) {
-                        
-                        bool destroy = true;
-                        
-                        if( type & ENTTYPE_ENEMY ) {
-                        
-                            int t = ( pShip->GetShipType() == 6 )? 0 : Util::RandomNumber( 0, 1 );
-                            int count = ( pShip->GetShipType() == 6 )? 45 : Util::RandomNumber( 3, 6 );
-                            
-                            CreateOrbs( t, count, pShip->GetX(), pShip->GetY() );
-                        
-                        }
-                        
-                        if( type & ENTTYPE_PLAYER && m_bPlayerInvincible ) {
                          
-                            destroy = false;
-                            
+                            pShip->SetAIEnabled( false );
+                            m_bPlayerInvincible = true;
                         }
-                        
-                        if( destroy ) {
-        
-                            DestroyShip( pShip, false );
-                            
-                            if( type & ENTTYPE_PLAYER )
-                                m_pPlayerEntity = NULL;
-                            
-                        }
-                        
-                    } else {
-                     
-                        pShip->SetAIEnabled( false );
-                        m_bPlayerInvincible = true;
+
                     }
 
-                }
+                    if( pShip->GetPos().GetY() > m_pGraphicsContext->GetWindowHeight() )
+                    {
 
-                if( pShip->GetPos().GetY() > m_pGraphicsContext->GetWindowHeight() )
+                        DestroyShip( pShip, true );
+
+                    }
+                    
+
+                } else if( type & ( ENTTYPE_ENBULLET | ENTTYPE_PLYBULLET ) )
                 {
 
-                    DestroyShip( pShip, true );
+                    CAIEntity * pBullet = static_cast< CAIEntity * >( ( *i ).GetContent() );
+
+                    if( ( pBullet->GetPos().GetY() < 0 && type & ENTTYPE_PLYBULLET ) ||
+                        ( pBullet->GetPos().GetY() < m_pGraphicsContext->GetWindowHeight() * -.5f && type & ENTTYPE_ENBULLET ) ||
+                        pBullet->GetPos().GetY() > m_pGraphicsContext->GetWindowHeight() )
+                        m_pEntityManager->DeleteEntity( pBullet );
 
                 }
-
-            } else if( type & ( ENTTYPE_ENBULLET | ENTTYPE_PLYBULLET ) )
-			{
-
-				CAIEntity * pBullet = static_cast< CAIEntity * >( ( *i ).GetContent() );
-
-				if( ( pBullet->GetPos().GetY() < 0 && type & ENTTYPE_PLYBULLET ) ||
-                    ( pBullet->GetPos().GetY() < m_pGraphicsContext->GetWindowHeight() * -.5f && type & ENTTYPE_ENBULLET ) ||
-                    pBullet->GetPos().GetY() > m_pGraphicsContext->GetWindowHeight() )
-					m_pEntityManager->DeleteEntity( pBullet );
-
-			}
+                
+            }
 
         }
 
@@ -1811,7 +1821,7 @@ void CTOFNContext::DrawStarBackground()
 void CTOFNContext::DebugDrawQuadTree() {
     
     m_pDrawContext->SetTexture( GetTexture( "pixel.png" )->GetFrame( 0 ).GetTexture() );
-    m_QuadTree.Draw( m_pGraphicsContext->GetDrawContext() );
+    //m_QuadTree.Draw( m_pGraphicsContext->GetDrawContext() );
     
 }
 
@@ -2063,7 +2073,7 @@ void CTOFNContext::GameLogic()
         UpdateExplosions();
         
         UpdateAllEntities();
-
+        
         UpdateTextPopups();
         
         DoEnemyGenerator();

@@ -49,6 +49,7 @@ public:
     virtual void PlaySound( std::string, float ) = 0;
     virtual void ClearAllEnemies() = 0;
     virtual void FadeMusic( int, float, float ) = 0;
+    virtual void EndGame() = 0;
     
 	CLuaContext() : CGameContext() { }
 	virtual ~CLuaContext() { }

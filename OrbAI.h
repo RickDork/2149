@@ -19,7 +19,9 @@ private:
 public:
     
     COrbAI();
-    virtual ~COrbAI() { }
+    virtual ~COrbAI() {
+    
+    }
     
     void Think();
     

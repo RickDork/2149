@@ -310,6 +310,9 @@ void CGameState::Think()
         
     }
     
+    if( m_pGameContext->IsGameEnded() )
+        m_bContinue = false;
+    
 }
 
 void CGameState::PreDrawBullets() {

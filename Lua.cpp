@@ -525,6 +525,14 @@ LuaCallBackFunction( FadeVolume ) {
     
 }
 
+LuaCallBackFunction( EndGame ) {
+ 
+    gLuaContext->EndGame();
+   
+    return 0;
+    
+}
+
 void CTOFNLua::CreateLuaHooks()
 {
     

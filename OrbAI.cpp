@@ -65,11 +65,11 @@ void COrbAI::Think() {
     m_Alpha -= 75.0f * p->GetFrameDelta();
     
     if( ( int )m_Alpha <= 1 ) {
-     
+    
         m_Alpha = 0.0f;
         
-        if( o->IsActive() )
-            o->KillMe();
+        if( o->IsActive() ) 
+            o->SetKillMe( true );
         
     }
     
