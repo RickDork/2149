@@ -5,11 +5,12 @@
 #include "CoreFoundation/CoreFoundation.h"
 #endif
 
-CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 1 ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f ),
+CTOFNContext::CTOFNContext() : CLuaContext(), m_pPlayerEntity( NULL ), m_MaxEnemyCount( 3 ), m_CurEnemyCount( 0 ), m_NextEnemySpawn( 0 ), m_PlayerEXP( 0 ), m_bGameTicksFrozen( false ), m_GameTicksFreezeTime( 0 ), m_RetryCount( 0 ), m_CurrentMission( 1
+                                                                                                                                                                                                                                                         ), m_bDrawHUD( true ), m_bCreatedStarField( false ), m_bStarFieldUpgradeSelect( false ), m_StartingEXP( 0 ), m_bMissionOver( false ), m_PlayerKillCount( 0 ), m_bGameFrozen( false ), m_StarFieldSpeedMul( 1.0f ), m_bStarFieldSlowFill( false ), m_StarFieldSlowFillIndex( 0 ), m_StarFieldSlowFillNextTime( 0 ), m_bBossMode( false ), m_BossHealthPercent( 1.0f ),
     m_bCutScene( false ), m_BossHealth( 0.0f ), m_bPlayerInvincible( false ), m_pSpaceFogFBO( NULL ), m_bEnding( false ), m_bEndGame( false ), m_NextBulletSound( 0 ), m_pCurMusChannel( NULL )
 {
     
-    m_QuadTree.CreateTree( 0, 0, -100, 1200 );
+    m_QuadTree.CreateTree( 0, 0, SCREEN_WIDTH, 0 );
 
 }
 
@@ -422,6 +423,8 @@ CShipEntity * CTOFNContext::CreatePlayerEntity()
         ent->SetMaterial( m_pTextureFactory->GetObjectContent( "player2.png" ) );
         ent->SetWrapEdges( false );
     }
+    
+    health *= 2.0f;
     
     ent->SetSize( 80, 80 );
     //ent->DisablePhysicsMovement();
@@ -990,12 +993,12 @@ CShipEntity * CTOFNContext::CreateEnemyEntity( int type, float x, float y, float
         float mul = 1.0f;
         
         if( HasUpgrade( 9 ) )
-            mul += 1.0f;
+            mul += 0.1f;
         
         if( HasUpgrade( 8 ) )
-            mul += 1.0f;
+            mul += .15f;
         else if( HasUpgrade( 3 ) )
-            mul += .5f;
+            mul += .15f;
         
         ent->SetHealth( mul * d.m_Health );
         ent->SetMaxHealth( mul * d.m_Health );
@@ -2067,7 +2070,7 @@ void CTOFNContext::GameLogic()
      //   m_PhysicsWorld.Update();
         
         SoundContext()->Update();
-        
+
         m_CollisionEngine.CheckForQuadTreeCollisions( &m_QuadTree, &m_CollisionCallback );
 
         UpdateExplosions();
